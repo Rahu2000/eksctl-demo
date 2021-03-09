@@ -11,14 +11,14 @@ affinity:
     requiredDuringSchedulingIgnoredDuringExecution:
       - labelSelector:
           matchExpressions:
-            - key: app
+            - key: app.kubernetes.io/name
               operator: In
               values:
-                - cert-manager
+                - aws-load-balancer-controller
         topologyKey: topology.kubernetes.io/zone
 tolerations:
   - key: operator
     operator: Equal
     value: 'true'
     effect: NoSchedule
-priorityClassName: system-cluster-critical
+priorityClassName: operational-critical

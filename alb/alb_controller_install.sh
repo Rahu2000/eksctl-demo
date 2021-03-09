@@ -38,7 +38,7 @@ fi
 # Install the cert-manager
 ##############################################################
 ## Apply priority class
-kubectl apply -f ./tempates/operator.priority.class.yaml
+kubectl apply -f ./templates/operator.priority.class.yaml
 
 ## Install the cert-manager CRD
 kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/"${CERT_MANGER_VERSION}"/cert-manager.crds.yaml
@@ -50,13 +50,9 @@ fi
 helm repo update
 
 if [ "Darwin" == "$LOCAL_OS_KERNEL" ]; then
-  ROLE_ARN=$(echo ${ROLE_ARN} | sed 's|\/|\\/|')
-  sed -i.bak "s|IAM_ROLE_NAME|${ROLE_ARN}|g" ./templates/cert-manager.value.yaml
-  sed -i '' "s|CERT_MANGER_VERSION|${CERT_MANGER_VERSION}|g" ./templates/cert-manager.value.yaml
+  sed -i.bak "s|CERT_MANGER_VERSION|${CERT_MANGER_VERSION}|g" ./templates/cert-manager.value.yaml
 else
-  ROLE_ARN=$(echo ${ROLE_ARN} | sed 's/\//\\//')
-  sed -i.bak "s/IAM_ROLE_NAME/${ROLE_ARN}/g" ./templates/cert-manager.value.yaml
-  sed -i '' "s/CERT_MANGER_VERSION/${CERT_MANGER_VERSION}/g" ./templates/cert-manager.value.yaml
+  sed -i.bak '' "s/CERT_MANGER_VERSION/${CERT_MANGER_VERSION}/g" ./templates/cert-manager.value.yaml
 fi
 
 ## Install the cert-manager helm chart
