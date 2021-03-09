@@ -1,0 +1,7 @@
+*/.DS_Store
+.DS_Store
+
+example
+*/templates/*.bak
+velero
+preconfig

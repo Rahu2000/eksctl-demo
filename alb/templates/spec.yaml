@@ -1,0 +1,24 @@
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: role
+              operator: In
+              values:
+                - operator
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+            - key: app
+              operator: In
+              values:
+                - cert-manager
+        topologyKey: topology.kubernetes.io/zone
+tolerations:
+  - key: operator
+    operator: Equal
+    value: 'true'
+    effect: NoSchedule
+priorityClassName: system-cluster-critical

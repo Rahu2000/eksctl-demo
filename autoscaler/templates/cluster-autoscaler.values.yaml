@@ -1,0 +1,175 @@
+---
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: role
+              operator: In
+              values:
+                - operator
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+            - key: app
+              operator: In
+              values:
+                - cluster-autoscaler
+        topologyKey: topology.kubernetes.io/zone
+
+autoDiscovery:
+  clusterName:  CLUSTER_NAME
+  tags:
+  - k8s.io/cluster-autoscaler/enabled
+  - k8s.io/cluster-autoscaler/{{ .Values.autoDiscovery.clusterName }}
+
+awsRegion: ap-northeast-2
+cloudConfigPath: /etc/aws.conf
+cloudProvider: aws
+
+containerSecurityContext:
+  capabilities:
+    drop:
+    - ALL
+
+# dnsPolicy -- Defaults to `ClusterFirst`. Valid values are:
+# `ClusterFirstWithHostNet`, `ClusterFirst`, `Default` or `None`.
+# If autoscaler does not depend on cluster DNS, recommended to set this to `Default`.
+dnsPolicy: ClusterFirst
+
+expanderPriorities: {}
+  # 10:
+  #   - .*p2-node-group.*
+  # 50:
+  #   - .*p3-node-group.*
+
+extraArgs:
+  logtostderr: true
+  stderrthreshold: info
+  v: 4
+  # write-status-configmap: true
+  # leader-elect: true
+  skip-nodes-with-local-storage: false
+  expander: least-waste
+  # scale-down-enabled: true
+  balance-similar-node-groups: true
+  # min-replica-count: 0
+  # scale-down-utilization-threshold: 0.5
+  # scale-down-non-empty-candidates-count: 30
+  # max-node-provision-time: 15m0s
+  # scan-interval: 10s
+  # scale-down-delay-after-add: 10m
+  # scale-down-delay-after-delete: 0s
+  # scale-down-delay-after-failure: 3m
+  # scale-down-unneeded-time: 10m
+  skip-nodes-with-system-pods: false
+
+extraEnv: {}
+extraEnvConfigMaps: {}
+envFromConfigMap: ""
+
+extraVolumes:
+  - name: ssl-certs
+    hostPath:
+      path: /etc/ssl/certs/ca-bundle.crt
+
+extraVolumeMounts:
+  - name: ssl-certs
+    mountPath: /etc/ssl/certs/ca-certificates.crt
+    readOnly: true
+
+fullnameOverride: RELEASE_NAME
+
+image:
+  repository: us.gcr.io/k8s-artifacts-prod/autoscaling/cluster-autoscaler
+  tag: CA_VERSION
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+  # - myRegistrKeySecretName
+
+podAnnotations:
+  cluster-autoscaler.kubernetes.io/safe-to-evict: "false"
+  kubernetes.io/psp: RELEASE_NAME
+
+podDisruptionBudget:
+  maxUnavailable: 1
+  # minAvailable: 1
+
+podLabels: {}
+
+additionalLabels: {}
+
+priorityClassName: "system-cluster-critical"
+
+rbac:
+  create: true
+  pspEnabled: true
+  serviceAccount:
+    annotations:
+      eks.amazonaws.com/role-arn: IAM_ROLE_NAME
+    create: true
+    # name: RELEASE_NAME
+    automountServiceAccountToken: true
+
+replicaCount: 1
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 300Mi
+  requests:
+    cpu: 100m
+    memory: 300Mi
+
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+  runAsGroup: 1001
+
+# service:
+#   annotations: {}
+#   labels: {}
+#   externalIPs: []
+#   loadBalancerIP: ""
+#   loadBalancerSourceRanges: []
+#   servicePort: 8085
+#   portName: http
+#   type: ClusterIP
+
+## Are you using Prometheus Operator?
+serviceMonitor:
+  # serviceMonitor.enabled -- If true, creates a Prometheus Operator ServiceMonitor.
+  enabled: false
+  # serviceMonitor.interval -- Interval that Prometheus scrapes Cluster Autoscaler metrics.
+  interval: 10s
+  # serviceMonitor.namespace -- Namespace which Prometheus is running in.
+  namespace: monitoring
+  ## [Prometheus Selector Label](https://github.com/helm/charts/tree/master/stable/prometheus-operator#prometheus-operator-1)
+  ## [Kube Prometheus Selector Label](https://github.com/helm/charts/tree/master/stable/prometheus-operator#exporters)
+  # serviceMonitor.selector -- Default to kube-prometheus install (CoreOS recommended), but should be set according to Prometheus install.
+  selector:
+    release: prometheus-operator
+  # serviceMonitor.path -- The path to scrape for metrics; autoscaler exposes `/metrics` (this is standard)
+  path: /metrics
+
+## Custom PrometheusRule to be defined
+## The value is evaluated as a template, so, for example, the value can depend on .Release or .Chart
+## ref: https://github.com/coreos/prometheus-operator#customresourcedefinitions
+prometheusRule:
+  # prometheusRule.enabled -- If true, creates a Prometheus Operator PrometheusRule.
+  enabled: false
+  # prometheusRule.additionalLabels -- Additional labels to be set in metadata.
+  additionalLabels: {}
+  # prometheusRule.namespace -- Namespace which Prometheus is running in.
+  namespace: monitoring
+  # prometheusRule.interval -- How often rules in the group are evaluated (falls back to `global.evaluation_interval` if not set).
+  interval: null
+  # prometheusRule.rules -- Rules spec template (see https://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/api.md#rule).
+  rules: []
+
+tolerations:
+  - key: operator
+    operator: Equal
+    value: 'true'
+    effect: NoSchedule

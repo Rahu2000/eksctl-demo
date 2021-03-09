@@ -1,0 +1,8 @@
+apiVersion: scheduling.k8s.io/v1
+description: Used for operator critical pods that must run in the cluster, but can be
+  moved to another node if necessary.
+kind: PriorityClass
+metadata:
+  name: operational-critical
+preemptionPolicy: PreemptLowerPriority
+value: 1000000000
