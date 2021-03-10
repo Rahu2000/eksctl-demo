@@ -175,8 +175,8 @@ nodeGroups:
 managedNodeGroups:
   - name: operator
     instanceType: t3.medium
-    minSize: 1
-    desiredCapacity: 1
+    minSize: 2
+    desiredCapacity: 2
     maxSize: 3
     # availabilityZones: ["us-west-2a", "us-west-2b"]
     volumeType: gp3

@@ -1,0 +1,129 @@
+replicaCount: 2
+
+proxy: {}
+#  http_proxy:
+#  no_proxy:
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+podAnnotations: {}
+
+enableVolumeScheduling: true
+enableVolumeResizing: true
+enableVolumeSnapshot: true
+
+# The "maximum number of attachable volumes" per node
+# Ref: https://docs.aws.amazon.com/ko_kr/AWSEC2/latest/UserGuide/volume_limits.html
+volumeAttachLimit: "39"
+
+resources:
+  limits:
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+# priorityClassName: "operational-critical"
+nodeSelector: {}
+tolerateAllTaints: false
+tolerations:
+  - key: operator
+    operator: Equal
+    value: "true"
+    effect: NoSchedule
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+          - key: role
+            operator: In
+            values:
+            - operator
+  # podAntiAffinity:
+  #   requiredDuringSchedulingIgnoredDuringExecution:
+  #     - labelSelector:
+  #         matchExpressions:
+  #         - key: app
+  #           operator: In
+  #           values:
+  #           - SERVICE_ACCOUNT
+  #       topologyKey: topology.kubernetes.io/zone
+
+topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: topology.kubernetes.io/zone
+    whenUnsatisfiable: ScheduleAnyway
+  - maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: ScheduleAnyway
+
+# Extra volume tags to attach to each dynamically provisioned volume.
+# ---
+# extraVolumeTags:
+#   key1: value1
+#   key2: value2
+extraVolumeTags: {}
+
+# If set, add pv/pvc metadata to plugin create requests as parameters.
+extraCreateMetadata: false
+
+# ID of the Kubernetes cluster used for tagging provisioned EBS volumes (optional).
+k8sTagClusterId: ""
+
+region: REGION
+
+node:
+  priorityClassName: ""
+  nodeSelector: {}
+  podAnnotations: {}
+  tolerateAllTaints: true
+  tolerations: []
+  resources: {}
+
+serviceAccount:
+  controller:
+    create: false # A service account will be created for you if set to true. Set to false if you want to use your own.
+    name: SERVICE_ACCOUNT # Name of the service-account to be used/created.
+    annotations: {}
+      # eks.amazonaws.com/role-arn: IAM_ROLE_NAME
+
+  snapshot:
+    create: false
+    name: SERVICE_ACCOUNT
+    annotations: {}
+      # eks.amazonaws.com/role-arn: IAM_ROLE_NAME
+  node:
+    create: true
+    name: ebs-csi-node-sa
+    annotations: {}
+
+storageClasses: []
+  # - name: gp3
+  #   annotations:
+  #     storageclass.kubernetes.io/is-default-class: "true"
+  #   # labels:
+  #   #   my-label-is: default
+  #   parameters:
+  #     type: gp3
+  #     fsType: ext4 # AWS default: ext4
+  #     # encrypted: false # volume encrypt with kms (default: false)
+  #     # kmsKeyId: arn:aws:kms:us-west-2:111122223333:alias/ExampleAlias
+  #   reclaimPolicy: Delete
+  #   volumeBindingMode: WaitForFirstConsumer
+  #   allowVolumeExpansion: true
+  # - name: gp2
+  #   annotations:
+  #     storageclass.kubernetes.io/is-default-class: "false"
+  #   # labels:
+  #   #   my-label-is: default
+  #   parameters:
+  #     type: gp2
+  #     fsType: ext4 # AWS default: ext4
+  #     # encrypted: false # volume encrypt with kms (default: false)
+  #     # kmsKeyId: arn:aws:kms:us-west-2:111122223333:alias/ExampleAlias
+  #   reclaimPolicy: Delete
+  #   volumeBindingMode: WaitForFirstConsumer
+  #   allowVolumeExpansion: false

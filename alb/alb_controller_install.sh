@@ -52,7 +52,7 @@ helm repo update
 if [ "Darwin" == "$LOCAL_OS_KERNEL" ]; then
   sed -i.bak "s|CERT_MANGER_VERSION|${CERT_MANGER_VERSION}|g" ./templates/cert-manager.value.yaml
 else
-  sed -i.bak '' "s/CERT_MANGER_VERSION/${CERT_MANGER_VERSION}/g" ./templates/cert-manager.value.yaml
+  sed -i.bak "s/CERT_MANGER_VERSION/${CERT_MANGER_VERSION}/g" ./templates/cert-manager.value.yaml
 fi
 
 ## Install the cert-manager helm chart
