@@ -71,4 +71,5 @@ fi
 kubectl apply -f ./templates/storage-class.yaml
 
 ## Add PodDisruptionBudget
+kubectl apply -f ./templates/ebs_csi_controller_pdb.yaml
 kubectl apply -f ./templates/ebs_snapshot_controller_pdb.yaml

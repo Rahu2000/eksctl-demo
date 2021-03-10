@@ -8,8 +8,8 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
-podAnnotations:
-  cluster-autoscaler.kubernetes.io/safe-to-evict: "false"
+podAnnotations: {}
+  # cluster-autoscaler.kubernetes.io/safe-to-evict: "false"
 
 enableVolumeScheduling: true
 enableVolumeResizing: true
