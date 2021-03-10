@@ -20,7 +20,7 @@ export REGION="ap-northeast-2"
 
 LOCAL_OS_KERNEL="$(uname -a | awk -F ' ' ' {print $1} ')"
 ##############################################################
-# IAM Policy for aws-load-balancer-controller ServiceAccount
+# IAM Policy for aws-ebs-csi-aws-load-balancer-controller ServiceAccount
 ##############################################################
 ## download a latest policy for EBS CSI controller from kubernetes-sigs
 curl -sSL -o ebs-csi-policy.json https://raw.githubusercontent.com/kubernetes-sigs/aws-ebs-csi-driver/master/docs/example-iam-policy.json
@@ -31,12 +31,6 @@ if [ -z "$IAM_POLICY_ARN" ]; then
   IAM_POLICY_ARN=$(aws iam create-policy --policy-name ${IAM_POLICY_NAME} --policy-document file://ebs-csi-policy.json | jq -r .Policy.Arn)
 fi
 
-## Add the Jetstack Helm repository
-if [ -z "$(helm repo list | grep https://kubernetes-sigs.github.io/aws-ebs-csi-driver)" ]; then
-  helm repo add aws-ebs-csi-driver https://kubernetes-sigs.github.io/aws-ebs-csi-driver
-fi
-helm repo update
-
 ## Create a serviceaccount
 eksctl create iamserviceaccount \
   --cluster=${CLUSTER_NAME} \
@@ -45,6 +39,12 @@ eksctl create iamserviceaccount \
   --attach-policy-arn=${IAM_POLICY_ARN} \
   --override-existing-serviceaccounts \
   --approve
+
+## Add the Jetstack Helm repository
+if [ -z "$(helm repo list | grep https://kubernetes-sigs.github.io/aws-ebs-csi-driver)" ]; then
+  helm repo add aws-ebs-csi-driver https://kubernetes-sigs.github.io/aws-ebs-csi-driver
+fi
+helm repo update
 
 if [ "Darwin" == "$LOCAL_OS_KERNEL" ]; then
   sed -i.bak "s|REGION|${REGION}|g" ./templates/ebs-csi-driver.values.yaml
