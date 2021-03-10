@@ -7,13 +7,19 @@ metadata:
   name: gp3
 parameters:
   type: gp3
-  fsType: ext4 # AWS default: ext4
+  csi.storage.k8s.io/fsType: ext4 # AWS default: ext4
   # encrypted: false # volume encrypt with kms (default: false)
   # kmsKeyId: arn:aws:kms:us-west-2:111122223333:alias/ExampleAlias
 provisioner: ebs.csi.aws.com
 allowVolumeExpansion: true
 reclaimPolicy: Delete
 volumeBindingMode: WaitForFirstConsumer
+## allowed AZ
+# allowedTopologies:
+# - matchLabelExpressions:
+#   - key: topology.ebs.csi.aws.com/zone
+#     values:
+#     - us-east-1a
 ---
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -24,7 +30,7 @@ metadata:
 parameters:
   type: io2
   iopsPerGB: "500"
-  fsType: ext4 # AWS default: ext4
+  csi.storage.k8s.io/fsType: ext4 # AWS default: ext4
   # encrypted: false # volume encrypt with kms (default: false)
   # kmsKeyId: arn:aws:kms:us-west-2:111122223333:alias/ExampleAlias
 provisioner: ebs.csi.aws.com

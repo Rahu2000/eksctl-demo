@@ -7,6 +7,6 @@ velero
 preconfig
 
 # ignore temporary files
-*/**/templates/*.bak
-*/**/*.json
-*/**/*.yaml
+*/**/*.bak
+*/*.json
+*/*.yaml

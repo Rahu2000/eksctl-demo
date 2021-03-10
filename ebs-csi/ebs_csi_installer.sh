@@ -69,3 +69,6 @@ fi
 
 ## Add gp3 and io2 type StorageClass
 kubectl apply -f ./templates/storage-class.yaml
+
+## Add PodDisruptionBudget
+kubectl apply -f ./templates/ebs_snapshot_controller_pdb.yaml
