@@ -11,7 +11,7 @@ affinity:
     requiredDuringSchedulingIgnoredDuringExecution:
       - labelSelector:
           matchExpressions:
-            - key: app.kubernetes.io/name
+            - key: k8s-app
               operator: In
               values:
                 - aws-load-balancer-controller
