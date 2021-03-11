@@ -1,0 +1,52 @@
+##############################################################
+# CLUSTER UPDATE
+#
+# Required tools
+# - helm v3+
+# - jq 1.6+
+# - kubectl 1.16+
+#
+# Tested version
+#   EKS v1.19
+##############################################################
+#!/bin/bash
+
+export METRICS_VERSION="5.7.1"
+export NAMESPACE="kube-system"
+export SUM_PODS_AND_SERVICES=6000
+
+# MB required (w/ autopath) = (Pods + Services) / 250 + 56
+calculate_memory () {
+  d=$((($1/$2)+$3))
+  echo $d
+}
+
+LOCAL_OS_KERNEL="$(uname -a | awk -F ' ' ' {print $1} ')"
+
+## Patch deployments/coredns
+kubectl get deployments/coredns -n ${NAMESPACE} -ojson | jq '.spec.template.spec.tolerations +=  [{"key":"operator","operator":"Equal","value":"true","effect":"NoSchedule"}]'  | kubectl apply -f -
+
+kubectl rollout restart deployments/coredns -n ${NAMESPACE}
+
+## Add coredns PodDisruptionBudget
+kubectl apply -f ./templates/coredns-PodDisruptionBudget.yaml
+
+METRICS_SERVER_MEMORY=$(calculate_memory $SUM_PODS_AND_SERVICES 250 56)
+
+## Modifying variables
+if [ "Darwin" == "$LOCAL_OS_KERNEL" ]; then
+  sed -i.bak "s|MEMORY|${METRICS_SERVER_MEMORY}|g" ./templates/metrics-server.values.yaml
+else
+  sed -i.bak "s/MEMORY/${METRICS_SERVER_MEMORY}/g" ./templates/metrics-server.values.yaml
+fi
+
+## Install the metric-server helm chart
+helm upgrade --install \
+  metrics-server bitnami/metrics-server \
+  --version=${CHART_VERSION} \
+  --namespace ${NAMESPACE} \
+  -f ./templates/metrics-server.values.yaml \
+  --wait
+
+# ## Add coredns hpa
+# ## TODO

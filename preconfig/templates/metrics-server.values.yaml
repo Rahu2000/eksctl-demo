@@ -1,0 +1,134 @@
+## String to partially override common.names.fullname template (will maintain the release name)
+# nameOverride:
+
+## Deployment pod host aliases
+## https://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/
+hostAliases: []
+
+replicas: 1
+
+rbac:
+  create: true
+
+serviceAccount:
+  create: true
+  # name:
+  automountServiceAccountToken: true
+
+apiService:
+  ## Specifies whether the v1beta1.metrics.k8s.io API service should be created
+  ## This should not be necessary in k8s version >= 1.8, but depends on vendors and cloud providers.
+  create: true
+
+securePort: 4443
+
+hostNetwork: false
+
+## Container command (using container default if not set)
+command: ["metrics-server"]
+
+extraArgs:
+  kubelet-preferred-address-types: InternalIP,ExternalIP,Hostname
+  cert-dir: /tmp
+  kubelet-use-node-status-port: true
+
+podAnnotations: {}
+
+priorityClassName: "system-cluster-critical"
+
+podAntiAffinityPreset: soft
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: role
+              operator: In
+              values:
+                - operator
+#   podAntiAffinity:
+#     requiredDuringSchedulingIgnoredDuringExecution:
+#       - labelSelector:
+#           matchExpressions:
+#             - key: k8s-app
+#               operator: In
+#               values:
+#                 - metrics-server
+
+# topologySpreadConstraints:
+#   - maxSkew: 1
+#     topologyKey: topology.kubernetes.io/zone
+#     whenUnsatisfiable: ScheduleAnyway
+#   - maxSkew: 1
+#     topologyKey: kubernetes.io/hostname
+#     whenUnsatisfiable: ScheduleAnyway
+
+nodeSelector: {}
+
+tolerations:
+  - key: operator
+    operator: Equal
+    value: 'true'
+    effect: NoSchedule
+
+##  Metrics Server K8s svc properties
+service:
+  type: ClusterIP
+  port: 443
+  # nodePort: 30001
+  # loadBalancerIP:
+  annotations: {}
+
+  labels:
+    kubernetes.io/cluster-service: "true"
+    kubernetes.io/name: "Metrics-server"
+
+resources:
+  limits:
+    memory: MEMORYMi
+  requests:
+    cpu: 100m
+    memory: MEMORYMi
+
+livenessProbe:
+  enabled: true
+  failureThreshold: 3
+  httpGet:
+    path: /livez
+    port: https
+    scheme: HTTPS
+  periodSeconds: 10
+readinessProbe:
+  enabled: true
+  failureThreshold: 3
+  httpGet:
+    path: /readyz
+    port: https
+    scheme: HTTPS
+  periodSeconds: 10
+
+containerSecurityContext:
+  enabled: true
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: ["ALL"]
+
+podSecurityContext:
+  enabled: true
+
+## Extra volumes to mount
+## Example Use Case: mount an `emptyDir` to allow running with a `readOnlyRootFilesystem: true`
+extraVolumes:
+  - name: tmpdir
+    emptyDir: {}
+#
+extraVolumeMounts:
+  - name: tmpdir
+    mountPath: /tmp

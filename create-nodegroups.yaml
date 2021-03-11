@@ -4,37 +4,30 @@ kind: ClusterConfig
 metadata:
   name: eksworkshop
   region: ap-northeast-2
-  version: "1.19"
-  tags:
-    env: dev
-
-vpc:
-  cidr: "192.168.0.0/16"
-  autoAllocateIPv6: false
-  publicAccessCIDRs: ["211.60.50.130/32"]
-  clusterEndpoints:
-    publicAccess: true
-    privateAccess: true
-  nat:
-    gateway: Single
-
-availabilityZones: ["ap-northeast-2a","ap-northeast-2b","ap-northeast-2c"]
-
-cloudWatch:
-  clusterLogging:
-    enableTypes: ["audit", "authenticator"]
-
-iam:
-  withOIDC: true
 
 nodeGroups:
   - name: spot
     minSize: 0
     maxSize: 2
-    volumeType: gp3
+    # securityGroups:
+    #   - attachIDs:
+    #     withShared: true
+    #     withLocal: true
+    # maxPodsPerNode: 10
+    # ebsOptimized: true
+    volumeType: gp3 # (gp2, gp3, io1, sc1, st1)
     volumeSize: 30
+    # volumeName: /dev/xvda
     volumeEncrypted: true
+    # volumeKmsKeyID:
+    # volumeIOPS: 1000
+    # volumeThroughput: 1000
+    # preBootstrapCommands:
+    # overrideBootstrapCommand:
+    # cpuCredits:
     instancesDistribution:
+      # set your own max price. AWS spot instance prices no longer cross OnDemand price.
+      # Comment out the field to default to OnDemand as max price.
       maxPrice: 0.014
       instanceTypes: ["t3.small"]
       onDemandBaseCapacity: 0
@@ -44,6 +37,9 @@ nodeGroups:
       role: spot
       lifecycle: Ec2Spot
       aws.amazon.com/spot: "true"
+    # Stick to one AZ for all GPU nodes.
+    # In case of termination, this will prevent volumes from being unavailable
+    # if the new instance got spun up in another AZ.
     availabilityZones: ["ap-northeast-2a","ap-northeast-2c"]
     taints:
       spotInstance: "true:PreferNoSchedule"
@@ -54,8 +50,28 @@ nodeGroups:
       k8s.io/cluster-autoscaler/node-template/taint/spotInstance: "true:PreferNoSchedule"
       k8s.io/cluster-autoscaler/enabled: "true"
       k8s.io/cluster-autoscaler/eksworkshop: "owned"
+    # iam:
+    #   instanceProfileARN:
+    #   withAddonPolicies:
+    #     autoScaler: true
+    #     cloudWatch: true
+    #     albIngress: true
+    #     imageBuilder:
+    #     externalDNS:
+    #     certManager:
+    #     appMesh:
+    #     appMeshPreview:
+    #     ebs:
+    #     fsx:
+    #     efs:
+    #     xRay:
+    # clusterDNS: {}
+    # bottlerocket:
+    #   enableAdminContainer: {}
+    #   settings: []
     privateNetworking: true
     disableIMDSv1: true
+    # disablePodIMDS: true
     ssh:
       enableSsm: true
     kubeletExtraConfig:
@@ -72,8 +88,10 @@ nodeGroups:
         memory.available:  "200Mi"
         nodefs.available: "10%"
       featureGates:
+        # DynamicKubeletConfig: true
         CSIMigrationAWS: true
-        RotateKubeletServerCertificate: true
+        # CSIMigrationAWSComplete: true
+        RotateKubeletServerCertificate: true # has to be enabled, otherwise it will be disabled
 
 managedNodeGroups:
   - name: operator
@@ -81,9 +99,15 @@ managedNodeGroups:
     minSize: 3
     desiredCapacity: 3
     maxSize: 4
+    # availabilityZones: ["us-west-2a", "us-west-2b"]
     volumeType: gp3
     volumeSize: 30
+    # volumeName: /dev/xvda
+    # volumeEncrypted: true
+    # securityGroups:
+    #   attachIDs: ["sg-1", "sg-2"]
     ssh:
+      # allow: true
       enableSsm: true
     labels:
       role: operator
@@ -95,18 +119,34 @@ managedNodeGroups:
       k8s.io/cluster-autoscaler/node-template/taint/operator: "true:NoSchedule"
       k8s.io/cluster-autoscaler/enabled: "true"
       k8s.io/cluster-autoscaler/eksworkshop: "owned"
+    # iam:
+    #   withAddonPolicies:
+    #     externalDNS: true
+    #     certManager: true
     privateNetworking: true
     disableIMDSv1: true
+    # disablePodIMDS: true
+    # instanceTypes: ["t4g.small", "t3a.small", "t3.small"]
+    # ami: ami-0ebb427ec55cc0de7
     preBootstrapCommands:
       - "sed -i '/^KUBELET_EXTRA_ARGS=/a KUBELET_EXTRA_ARGS+=\" --register-with-taints=operator=true:NoSchedule --feature-gates=CSIMigrationAWS=true \"' /etc/eks/bootstrap.sh"
+    # subnets:
+    #   - private-one
+    #   - private-three
   - name: apps
     instanceType: t3.small
     minSize: 2
     desiredCapacity: 2
     maxSize: 3
+    # availabilityZones: ["us-west-2a", "us-west-2b"]
     volumeType: gp3
     volumeSize: 30
+    # volumeName: /dev/xvda
+    # volumeEncrypted: true
+    # securityGroups:
+    #   attachIDs: ["sg-1", "sg-2"]
     ssh:
+      # allow: true
       enableSsm: true
     labels:
       role: applications
@@ -117,9 +157,19 @@ managedNodeGroups:
       k8s.io/cluster-autoscaler/node-template/label/lifecycle: OnDemand
       k8s.io/cluster-autoscaler/enabled: "true"
       k8s.io/cluster-autoscaler/eksworkshop: "owned"
+    # iam:
+    #   withAddonPolicies:
+    #     externalDNS: true
+    #     certManager: true
     privateNetworking: true
     disableIMDSv1: true
+    # disablePodIMDS: true
+    # spot: true
+    # instanceTypes: ["t3.small", "t3.small"]
     preBootstrapCommands:
       - "jq -c '. + { \"imageGCHighThresholdPercent\": 80 }' /etc/kubernetes/kubelet/kubelet-config.json > tmp.$$.json && mv tmp.$$.json /etc/kubernetes/kubelet/kubelet-config.json"
       - "jq -c '. + { \"imageGCLowThresholdPercent\": 70 }' /etc/kubernetes/kubelet/kubelet-config.json > tmp.$$.json && mv tmp.$$.json /etc/kubernetes/kubelet/kubelet-config.json"
       - "sed -i '/^KUBELET_EXTRA_ARGS=/a KUBELET_EXTRA_ARGS+=\" --feature-gates=CSIMigrationAWS=true \"' /etc/eks/bootstrap.sh"
+    # subnets:
+    #   - private-one
+    #   - private-three

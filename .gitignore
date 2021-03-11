@@ -4,7 +4,6 @@
 # ignore
 example
 velero
-preconfig
 
 # ignore temporary files
 */**/*.bak
