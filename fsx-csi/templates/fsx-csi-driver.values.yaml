@@ -49,7 +49,12 @@ controllerService:
     runAsNonRoot: true
     runAsUser: 1011
 
-    resources: {}
+    resources:
+      limits:
+        memory: 128Mi
+      requeists:
+        cpu: 100m
+        memory: 128Mi
 
 # Daemonset
 nodeService:
@@ -73,6 +78,8 @@ nodeService:
       privileged: true
 
     resources: {}
+      # requeists:
+      #   cpu: 10m
 
   csiDriverRegistrar:
     # image:
@@ -85,17 +92,19 @@ nodeService:
 
     securityContext: {}
 
-    # resources:
-    #   requeists:
-    #     cpu: 10m
+    resources: {}
+      # requeists:
+      #   cpu: 10m
 
   livenessProbe:
-    image:
-      # repository: quay.io/k8scsi/livenessprobe
-      # tag: v1.1.0
-      # pullPolicy: Always
+  #   image:
+  #     repository: quay.io/k8scsi/livenessprobe
+  #     tag: v1.1.0
+  #     pullPolicy: Always
 
-    resources: {}
+    resources:
+      requests:
+        cpu: 10m
 
 nameOverride: ""
 fullnameOverride: ""
