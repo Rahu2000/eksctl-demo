@@ -76,8 +76,16 @@ nodeService:
       - --logtostderr
       - --v=5
 
+    # securityContext:
+    #   privileged: true
     securityContext:
-      privileged: true
+      capabilities:
+        drop:
+        - ALL
+      readOnlyRootFilesystem: true
+      allowPrivilegeEscalation: false
+      runAsNonRoot: true
+      runAsUser: 1011
 
     resources: {}
       # requests:
@@ -92,11 +100,19 @@ nodeService:
     extraArgs:
       - --v=5
 
-    securityContext: {}
+    # securityContext: {}
+    securityContext:
+      capabilities:
+        drop:
+        - ALL
+      readOnlyRootFilesystem: true
+      allowPrivilegeEscalation: false
+      runAsNonRoot: true
+      runAsUser: 1011
 
-    resources: {}
-      # requests:
-      #   cpu: 10m
+    resources:
+      requests:
+        cpu: 10m
 
   livenessProbe:
   #   image:
