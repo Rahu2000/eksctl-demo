@@ -76,16 +76,8 @@ nodeService:
       - --logtostderr
       - --v=5
 
-    # securityContext:
-    #   privileged: true
     securityContext:
-      capabilities:
-        drop:
-        - ALL
-      readOnlyRootFilesystem: true
-      allowPrivilegeEscalation: false
-      runAsNonRoot: true
-      runAsUser: 1011
+      privileged: true
 
     resources: {}
       # requests:
@@ -102,6 +94,7 @@ nodeService:
 
     # securityContext: {}
     securityContext:
+      privileged: false
       capabilities:
         drop:
         - ALL

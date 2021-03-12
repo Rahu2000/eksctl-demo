@@ -20,7 +20,6 @@ export REGION="ap-northeast-2"
 
 source ../common/utils.sh
 
-LOCAL_OS_KERNEL="$(uname -a | awk -F ' ' ' {print $1} ')"
 ##############################################################
 # Create IAM Role and ServiceAccount
 ##############################################################
@@ -31,6 +30,11 @@ if [ -z "$IAM_POLICY_ARN" ]; then
 fi
 
 IAM_ROLE_ARN=$(createRole "$CLUSTER_NAME" "$NAMESPACE" "$SERVICE_ACCOUNT" "Amazon_FSx_Lustre_CSI_Driver_Role" "$IAM_POLICY_ARN")
+
+##############################################################
+# Install AWS FSX CSI DRIVER with Helm
+##############################################################
+LOCAL_OS_KERNEL="$(uname -a | awk -F ' ' ' {print $1} ')"
 
 ## Add the aws-ebs-csi-driver Helm repository
 if [ -z "$(helm repo list | grep https://https://kubernetes-sigs.github.io/aws-fsx-csi-driver)" ]; then
@@ -53,12 +57,14 @@ helm upgrade --install aws-fsx-csi-driver \
   -f ./templates/fsx-csi-driver.values.yaml \
   --wait
 
+##############################################################
+# Update Spec
+# Notice: should be replace tolerations values
+##############################################################
 CONTROLLER_SPEC=$(cat ./templates/controller-additional-spec.yaml | yq | jq -r -c )
 
 ## Patch deployments/aws-fsx-csi-driver-controller
-kubectl get deployments/aws-fsx-csi-driver-controller -n kube-system -ojson | jq --argjson spec "${CONTROLLER_SPEC}" '.spec.template.spec +=  $spec' | kubectl apply -f -
+kubectl get deployments/aws-fsx-csi-driver-controller -n kube-system -ojson | jq --argjson spec "${CONTROLLER_SPEC}" '.spec.template.spec +=  $spec' | jq '.spec.template.spec.tolerations +=  [{"key":"operator","operator":"Equal","value":"true","effect":"NoSchedule"}]' | kubectl apply -f -
 
-NODE_SPEC=$(cat ./templates/node-additional-spec.yaml | yq | jq -r -c )
-
-## Patch daemonsets/aws-load-balancer-controller
-kubectl get deployments/aws-fsx-csi-driver-daemonset -n kube-system -ojson | jq --argjson spec "${NODE_SPEC}" '.spec.template.spec +=  $spec' | kubectl apply -f -
+## Patch daemonsets/aws-fsx-csi-driver-daemonset
+kubectl get daemonsets/aws-fsx-csi-driver-daemonset -n kube-system -ojson | jq '.spec.template.spec.tolerations +=  [{"key":"operator","operator":"Equal","value":"true","effect":"NoSchedule"}]' | jq '.spec.template.spec +=  {"priorityClassName":"system-node-critical"}' | kubectl apply -f -

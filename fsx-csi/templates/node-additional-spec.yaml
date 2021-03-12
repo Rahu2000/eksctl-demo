@@ -1,6 +1,0 @@
-tolerations:
-  - key: operator
-    operator: Equal
-    value: 'true'
-    effect: NoSchedule
-priorityClassName: system-node-critical

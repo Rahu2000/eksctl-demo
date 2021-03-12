@@ -4,7 +4,7 @@ metadata:
   name: fsx-csi-controller-pdb
   namespace: kube-system
 spec:
-  minAvailable: 2
+  minAvailable: 1
   selector:
     matchLabels:
       app.kubernetes.io/instance: aws-fsx-csi-driver-controller

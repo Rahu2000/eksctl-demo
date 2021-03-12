@@ -18,9 +18,3 @@ affinity:
             namespaces:
               - kube-system
             topologyKey: kubernetes.io/hostname
-tolerations:
-  - key: operator
-    operator: Equal
-    value: 'true'
-    effect: NoSchedule
-priorityClassName: system-cluster-critical
