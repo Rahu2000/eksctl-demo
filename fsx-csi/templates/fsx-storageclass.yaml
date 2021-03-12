@@ -1,0 +1,21 @@
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: FSX_SC_NAME
+provisioner: fsx.csi.aws.com
+parameters:
+  subnetId: SUBNET_ID
+  securityGroupIds: SECURITY_GROUP_ID
+  s3ImportPath: s3://S3_BUCKET_NAME
+  s3ExportPath: s3://S3_BUCKET_NAME/export
+  deploymentType: SCRACH_TYPE # [SCRATCH_1|SCRATCH_2(default)|PERSISTENT_1]
+  # autoImportPolicy: NONE # (optional) [NONE(default)|NEW|NEW_CHANGED]
+  # storageType: HDD # (optional) PERSISTENT_1 is required [SSD|HDD]
+  # driveCacheType: READ # (optional) HDD is required [NONE|READ]
+  # automaticBackupRetentionDays: 7 # (optional) default: 0
+  # dailyAutomaticBackupStartTime: 00:05 # (optional) UTC zone
+  # copyTagsToBackups: true # (optional) default: false
+  # ImportedFileChunkSize: 512000 # (optional) default: 1024 MiB
+  # kmsKeyId: # (optional)
+mountOptions:
+  - flock # [defaults|noatime|flock|_netdev]
