@@ -28,6 +28,8 @@ controllerService:
       runAsUser: 1011
 
     resources: {}
+      # requests:
+      #   cpu: 10m
 
   csiProvisioner:
     # image:
@@ -52,7 +54,7 @@ controllerService:
     resources:
       limits:
         memory: 128Mi
-      requeists:
+      requests:
         cpu: 100m
         memory: 128Mi
 
@@ -78,7 +80,7 @@ nodeService:
       privileged: true
 
     resources: {}
-      # requeists:
+      # requests:
       #   cpu: 10m
 
   csiDriverRegistrar:
@@ -93,7 +95,7 @@ nodeService:
     securityContext: {}
 
     resources: {}
-      # requeists:
+      # requests:
       #   cpu: 10m
 
   livenessProbe:
@@ -103,8 +105,8 @@ nodeService:
   #     pullPolicy: Always
 
     resources:
-      requests:
-        cpu: 10m
+      # requests:
+      #   cpu: 10m
 
 nameOverride: ""
 fullnameOverride: ""
