@@ -24,7 +24,6 @@ securePort: 4443
 
 hostNetwork: false
 
-## Container command (using container default if not set)
 command: ["metrics-server"]
 
 extraArgs:
@@ -36,37 +35,25 @@ podAnnotations: {}
 
 priorityClassName: "system-cluster-critical"
 
-podAntiAffinityPreset: soft
+nodeAffinityPreset:
+  type: "hard"
+  key: "role"
+  values:
+    - operator
+
+podAntiAffinityPreset: "soft"
 
 podDisruptionBudget:
   enabled: true
   minAvailable: 1
 
-affinity:
-  nodeAffinity:
-    requiredDuringSchedulingIgnoredDuringExecution:
-      nodeSelectorTerms:
-        - matchExpressions:
-            - key: role
-              operator: In
-              values:
-                - operator
-#   podAntiAffinity:
-#     requiredDuringSchedulingIgnoredDuringExecution:
-#       - labelSelector:
-#           matchExpressions:
-#             - key: k8s-app
-#               operator: In
-#               values:
-#                 - metrics-server
-
-# topologySpreadConstraints:
-#   - maxSkew: 1
-#     topologyKey: topology.kubernetes.io/zone
-#     whenUnsatisfiable: ScheduleAnyway
-#   - maxSkew: 1
-#     topologyKey: kubernetes.io/hostname
-#     whenUnsatisfiable: ScheduleAnyway
+topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: topology.kubernetes.io/zone
+    whenUnsatisfiable: ScheduleAnyway
+  - maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: ScheduleAnyway
 
 nodeSelector: {}
 
@@ -86,7 +73,7 @@ service:
 
   labels:
     kubernetes.io/cluster-service: "true"
-    kubernetes.io/name: "Metrics-server"
+    kubernetes.io/name: "metrics-server"
 
 resources:
   limits:
@@ -123,12 +110,10 @@ containerSecurityContext:
 podSecurityContext:
   enabled: true
 
-## Extra volumes to mount
-## Example Use Case: mount an `emptyDir` to allow running with a `readOnlyRootFilesystem: true`
 extraVolumes:
   - name: tmpdir
     emptyDir: {}
-#
+
 extraVolumeMounts:
   - name: tmpdir
     mountPath: /tmp
