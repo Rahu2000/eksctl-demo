@@ -74,7 +74,7 @@ helm upgrade --install aws-ebs-csi-driver \
 # Create Storage Class
 ##############################################################
 ## Remove in-tree gp2 driver and recreate
-if [[ "kubernetes.io/aws-ebs" == "$(kubectl get sc gp2 | grep gp2 | awk -F ' ' '{ print $2 }')" ]]; then
+if [[ "kubernetes.io/aws-ebs" == "$(kubectl get sc gp2 | grep gp2 | awk -F ' ' '{ print $3 }')" ]]; then
   kubectl delete sc gp2
   kubectl apply -f ./templates/gp2-storage-class.yaml
 fi
