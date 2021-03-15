@@ -8,11 +8,12 @@
 #
 # Tested version
 #   EKS v1.19
-#   aws-fsx-csi v0.4.0
+#   chart: aws-fsx-csi-driver/aws-fsx-csi-driver v0.1.0 (0.4.0)
 ##############################################################
 #!/bin/bash
 export CLUSTER_NAME="eksworkshop"
-export IAM_POLICY_NAME="Amazon_FSx_Lustre_CSI_Driver"
+export IAM_POLICY_NAME="AmazonEKS_FSx_Lustre_CSI_Driver_Policy"
+export IAM_ROLE_NAME="AmazonEKS_FSx_Lustre_CSI_Driver_Role"
 export NAMESPACE="kube-system"
 export SERVICE_ACCOUNT="fsx-csi-controller"
 export CHART_VERSION="v0.1.0"
@@ -26,10 +27,10 @@ source ../common/utils.sh
 ## create a policy
 IAM_POLICY_ARN=$(aws iam list-policies --scope Local 2> /dev/null | jq -c --arg policyname $IAM_POLICY_NAME '.Policies[] | select(.PolicyName == $policyname)' | jq -r '.Arn')
 if [ -z "$IAM_POLICY_ARN" ]; then
-  IAM_POLICY_ARN=$(aws iam create-policy --policy-name ${IAM_POLICY_NAME} --policy-document file://templates/fsx-csi-driver.json | jq -r .Policy.Arn)
+  IAM_POLICY_ARN=$(aws iam create-policy --policy-name ${IAM_POLICY_NAME} --policy-document file://templates/fsx-csi-driver-policy.json | jq -r .Policy.Arn)
 fi
 
-IAM_ROLE_ARN=$(createRole "$CLUSTER_NAME" "$NAMESPACE" "$SERVICE_ACCOUNT" "Amazon_FSx_Lustre_CSI_Driver_Role" "$IAM_POLICY_ARN")
+IAM_ROLE_ARN=$(createRole "$CLUSTER_NAME" "$NAMESPACE" "$SERVICE_ACCOUNT" "$IAM_ROLE_NAME" "$IAM_POLICY_ARN")
 
 ##############################################################
 # Install AWS FSX CSI DRIVER with Helm
@@ -68,3 +69,8 @@ kubectl get deployments/aws-fsx-csi-driver-controller -n kube-system -ojson | jq
 
 ## Patch daemonsets/aws-fsx-csi-driver-daemonset
 kubectl get daemonsets/aws-fsx-csi-driver-daemonset -n kube-system -ojson | jq '.spec.template.spec.tolerations +=  [{"key":"operator","operator":"Equal","value":"true","effect":"NoSchedule"}]' | jq '.spec.template.spec +=  {"priorityClassName":"system-node-critical"}' | kubectl apply -f -
+
+##############################################################
+# Create a FSX controller PodDisruptionBudget
+##############################################################
+kubectl apply -f ./templates/fsx-csi-controller-pdb.yaml
