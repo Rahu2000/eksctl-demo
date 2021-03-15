@@ -8,6 +8,7 @@
 #
 # Tested version
 #   EKS v1.19
+#   chart: bitnami/metrics-server 5.7.1 (0.4.2)
 ##############################################################
 #!/bin/bash
 
@@ -24,12 +25,19 @@ calculate_memory () {
 LOCAL_OS_KERNEL="$(uname -a | awk -F ' ' ' {print $1} ')"
 
 ## Patch deployments/coredns
-kubectl get deployments/coredns -n ${NAMESPACE} -ojson | jq '.spec.template.spec.tolerations +=  [{"key":"operator","operator":"Equal","value":"true","effect":"NoSchedule"}]'  | kubectl apply -f -
+## Notice: should be replace tolerations values
+kubectl get deployments/coredns -n ${NAMESPACE} -ojson | jq '.spec.template.spec.tolerations +=  [{"key":"operator","operator":"Equal","value":"true","effect":"NoSchedule"}]' | jq '.spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions +=  [{"key":"role","operator":"In","values":["operator"]}]' | kubectl apply -f -
 
 kubectl rollout restart deployments/coredns -n ${NAMESPACE}
 
 ## Add coredns PodDisruptionBudget
-kubectl apply -f ./templates/coredns-PodDisruptionBudget.yaml
+kubectl apply -f ./templates/coredns-pdb.yaml
+
+## Add the bitnami Helm repository
+if [ -z "$(helm repo list | grep https://charts.bitnami.com/bitnami)" ]; then
+  helm repo add bitnami https://charts.bitnami.com/bitnami
+fi
+helm repo update
 
 METRICS_SERVER_MEMORY=$(calculate_memory $SUM_PODS_AND_SERVICES 250 56)
 
@@ -48,5 +56,5 @@ helm upgrade --install \
   -f ./templates/metrics-server.values.yaml \
   --wait
 
-# ## Add coredns hpa
 # ## TODO
+# ## Add coredns hpa
