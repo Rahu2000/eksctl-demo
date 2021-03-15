@@ -7,6 +7,7 @@
 # - jq 1.6+
 # - curl
 # - kubectl 1.16+
+# - gnu-sed
 #
 # Tested version
 #   EKS v1.19
@@ -15,25 +16,18 @@
 ##############################################################
 #!/bin/bash
 export CLUSTER_NAME="eksworkshop"
-export IAM_POLICY_NAME="AWSLoadBalancerControllerPolicy"
+export IAM_POLICY_NAME="AmazonEKS_Load_Balancer_Controller_Policy"
+export IAM_ROLE_NAME="AmazonEKS_Load_Balancer_Controller_Role"
 export CERT_MANGER_VERSION="v1.0.2"
 export ALB_CONTROLLER_VERSION="v2.1.3"
 export ALB_CONTROLLER_FILE="v2_1_3"
+export SERVICE_ACCOUNT="aws-load-balancer-controller"
+export NAMESPACE="kube-system"
 export REGION="ap-northeast-2"
 
+source ../common/utils.sh
+
 LOCAL_OS_KERNEL="$(uname -a | awk -F ' ' ' {print $1} ')"
-##############################################################
-# IAM Policy for aws-load-balancer-controller ServiceAccount
-##############################################################
-## download a latest policy for Aws Load Balancer controller from kubernetes-sigs
-curl -o iam_policy.json https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/"${ALB_CONTROLLER_VERSION}"/docs/install/iam_policy.json
-
-## create a policy
-IAM_POLICY_ARN=$(aws iam list-policies --scope Local 2> /dev/null | jq -c --arg policyname $IAM_POLICY_NAME '.Policies[] | select(.PolicyName == $policyname)' | jq -r '.Arn')
-if [ -z "$IAM_POLICY_ARN" ]; then
-  IAM_POLICY_ARN=$(aws iam create-policy --policy-name ${IAM_POLICY_NAME} --policy-document file://iam_policy.json | jq -r .Policy.Arn)
-fi
-
 ##############################################################
 # Install the cert-manager
 ##############################################################
@@ -65,56 +59,45 @@ helm upgrade --install \
   --wait
 
 ##############################################################
+# Create IAM Role for a aws-load-balancer-controller ServiceAccount
+##############################################################
+## download a latest policy for Aws Load Balancer controller from kubernetes-sigs
+curl -o iam_policy.json https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/"${ALB_CONTROLLER_VERSION}"/docs/install/iam_policy.json
+
+## create a policy
+IAM_POLICY_ARN=$(aws iam list-policies --scope Local 2> /dev/null | jq -c --arg policyname $IAM_POLICY_NAME '.Policies[] | select(.PolicyName == $policyname)' | jq -r '.Arn')
+if [ -z "$IAM_POLICY_ARN" ]; then
+  IAM_POLICY_ARN=$(aws iam create-policy --policy-name ${IAM_POLICY_NAME} --policy-document file://iam_policy.json | jq -r .Policy.Arn)
+fi
+
+IAM_ROLE_ARN=$(createRole "$CLUSTER_NAME" "$NAMESPACE" "$SERVICE_ACCOUNT" "$IAM_ROLE_NAME" "$IAM_POLICY_ARN")
+
+##############################################################
 # Install the aws-load-balancer-controller
 ##############################################################
-## Update serviceaccount
-eksctl create iamserviceaccount \
-  --cluster=${CLUSTER_NAME} \
-  --namespace=kube-system \
-  --name=aws-load-balancer-controller \
-  --attach-policy-arn=${IAM_POLICY_ARN} \
-  --override-existing-serviceaccounts \
-  --approve
-
-sleep 10
-
 ## Manifest download
-curl -o "${ALB_CONTROLLER_FILE}_full.yaml" https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/"${ALB_CONTROLLER_VERSION}"/docs/install/"${ALB_CONTROLLER_FILE}"_full.yaml
+curl -o "${ALB_CONTROLLER_FILE}_full.yaml" https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/"${ALB_CONTROLLER_VERSION}"/docs/install/"${ALB_CONTROLLER_FILE}_full.yaml"
 
-## Remove 'ServiceAccount Resource definition' from downloaded file
-START_LINE=$(grep -n "^kind: ServiceAccount" "${ALB_CONTROLLER_FILE}"_full.yaml|awk -F ':' ' { print$1 } ')
-let "START_LINE-=1"
-END_LINE=0
-for line in $(grep -n "^---$" "${ALB_CONTROLLER_FILE}"_full.yaml)
-do
-  number=$(echo "$line" | awk -F ':' ' { print$1 } ')
-  if [ $number -gt $START_LINE ]; then
-    END_LINE=$number
-    break;
-  fi
-done
-
-## Remove line
-sed -i.bak -e "${START_LINE},${END_LINE}d;" "${ALB_CONTROLLER_FILE}"_full.yaml
+SA_LINE_NUM=$(grep -n "^kind: ServiceAccount" "${ALB_CONTROLLER_FILE}_full.yaml"|awk -F ':' ' { print$1 } ')
+let "SA_LINE_NUM+=1"
 
 # Modify cluster name and resource.requests.memory (to avoid OOM)
 if [ "Darwin" == "$LOCAL_OS_KERNEL" ]; then
-  sed -i '' "s|your-cluster-name|${CLUSTER_NAME}|g" "${ALB_CONTROLLER_FILE}"_full.yaml
-  sed -i '' "s|200Mi|500Mi|g" "${ALB_CONTROLLER_FILE}"_full.yaml
+  gsed -i "${SA_LINE_NUM} a XXXXeks.amazonaws.com/role-arn: ${IAM_ROLE_ARN}" "${ALB_CONTROLLER_FILE}_full.yaml"
+  gsed -i "${SA_LINE_NUM} a XXannotations:" "${ALB_CONTROLLER_FILE}_full.yaml"
+  gsed -i 's/XX/  /g' "${ALB_CONTROLLER_FILE}_full.yaml"
+  sed -i '' "s|your-cluster-name|${CLUSTER_NAME}|g" "${ALB_CONTROLLER_FILE}_full.yaml"
+  # sed -i '' "s|200Mi|500Mi|g" "${ALB_CONTROLLER_FILE}_full.yaml"
 else
-  sed -i '' "s/your-cluster-name/${CLUSTER_NAME}/g" "${ALB_CONTROLLER_FILE}"_full.yaml
-  sed -i '' "s/200Mi/500Mi/g" "${ALB_CONTROLLER_FILE}"_full.yaml
+  sed -i "${SA_LINE_NUM} a XXXXeks.amazonaws.com/role-arn: ${IAM_ROLE_ARN}" "${ALB_CONTROLLER_FILE}_full.yaml"
+  sed -i "${SA_LINE_NUM} a XXannotations:" "${ALB_CONTROLLER_FILE}_full.yaml"
+  sed -i 's/XX/  /g' "${ALB_CONTROLLER_FILE}_full.yaml"
+  sed -i '' "s/your-cluster-name/${CLUSTER_NAME}/g" "${ALB_CONTROLLER_FILE}_full.yaml"
+  # sed -i '' "s/200Mi/500Mi/g" "${ALB_CONTROLLER_FILE}_full.yaml"
 fi
 
-# # Confirm cert-manager.io's version
-# if [ "Darwin" == "$LOCAL_OS_KERNEL" ]; then
-#   sed -i '' "s|cert-manager.io\/v1alpha2|cert-manager.io\/v1|g" "${ALB_CONTROLLER_FILE}"_full.yaml
-# else
-#   sed -i '' "s/cert-manager.io\/v1alpha2|cert-manager.io\/v1/g" "${ALB_CONTROLLER_FILE}"_full.yaml
-# fi
-
 ## install aws-load-balance-controller
-kubectl apply --validate=false -f "${ALB_CONTROLLER_FILE}"_full.yaml
+kubectl apply --validate=false -f "${ALB_CONTROLLER_FILE}_full.yaml"
 
 ## Patch spec
 ARG1="--aws-vpc-id=$(aws eks describe-cluster --name $CLUSTER_NAME --region $REGION | jq -r .cluster.resourcesVpcConfig.vpcId)"
@@ -127,7 +110,7 @@ ARG2="--aws-region=$REGION"
 SPEC=$(cat ./templates/spec.yaml | yq | jq -r -c )
 
 ## Patch deployments/aws-load-balancer-controller
-kubectl get deployments/aws-load-balancer-controller -n kube-system -ojson | jq --arg vpc "${ARG1}" --arg region "${ARG2}" '.spec.template.spec.containers[0].args |= . + [$vpc,$region]' | jq --argjson spec "${SPEC}" '.spec.template.spec +=  $spec' | jq '.spec.template.metadata +=  {"annotations": {"cluster-autoscaler.kubernetes.io/safe-to-evict": "false"}}' | kubectl apply -f -
+kubectl get deployments/aws-load-balancer-controller -n kube-system -ojson | jq --arg vpc "${ARG1}" --arg region "${ARG2}" '.spec.template.spec.containers[0].args |= . + [$vpc,$region]' | jq --argjson spec "${SPEC}" '.spec.template.spec +=  $spec' | kubectl apply -f -
 
 ## Add PodDisruptionBudget
-kubectl apply -f ./templates/alb_controller_pdb.yaml
+kubectl apply -f ./templates/alb-controller-pdb.yaml
