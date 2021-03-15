@@ -81,20 +81,20 @@ extraVolumeMounts:
 
 fullnameOverride: RELEASE_NAME
 
-image:
-  repository: us.gcr.io/k8s-artifacts-prod/autoscaling/cluster-autoscaler
-  tag: CA_VERSION
-  pullPolicy: IfNotPresent
-  pullSecrets: []
-  # - myRegistrKeySecretName
+image: {}
+  # repository: us.gcr.io/k8s-artifacts-prod/autoscaling/cluster-autoscaler
+  # tag: CA_VERSION
+  # pullPolicy: IfNotPresent
+  # pullSecrets: []
+  ## - myRegistrKeySecretName
 
 podAnnotations:
   cluster-autoscaler.kubernetes.io/safe-to-evict: "false"
   kubernetes.io/psp: RELEASE_NAME
 
 podDisruptionBudget:
-  maxUnavailable: 1
-  # minAvailable: 1
+  #maxUnavailable: 1
+  minAvailable: 1
 
 podLabels: {}
 
@@ -109,7 +109,7 @@ rbac:
     annotations:
       eks.amazonaws.com/role-arn: IAM_ROLE_NAME
     create: true
-    # name: RELEASE_NAME
+    name: SERVICE_ACCOUNT
     automountServiceAccountToken: true
 
 replicaCount: 1
