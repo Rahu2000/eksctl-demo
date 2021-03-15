@@ -69,7 +69,7 @@ topologySpreadConstraints:
 extraVolumeTags: {}
 
 # If set, add pv/pvc metadata to plugin create requests as parameters.
-extraCreateMetadata: false
+extraCreateMetadata: true
 
 # ID of the Kubernetes cluster used for tagging provisioned EBS volumes (optional).
 k8sTagClusterId: ""
@@ -86,45 +86,19 @@ node:
 
 serviceAccount:
   controller:
-    create: false # A service account will be created for you if set to true. Set to false if you want to use your own.
-    name: SERVICE_ACCOUNT # Name of the service-account to be used/created.
-    annotations: {}
-      # eks.amazonaws.com/role-arn: IAM_ROLE_NAME
+    create: true
+    name: CONTROLLER_SERVICE_ACCOUNT # Name of the service-account to be used/created.
+    annotations:
+      eks.amazonaws.com/role-arn: CONTROLLER_IAM_ROLE_ARN
 
   snapshot:
-    create: false
-    name: SERVICE_ACCOUNT
-    annotations: {}
-      # eks.amazonaws.com/role-arn: IAM_ROLE_NAME
+    create: true
+    name: SNAPSHOT_SERVICE_ACCOUNT
+    annotations:
+      eks.amazonaws.com/role-arn: SNAPSHOT_IAM_ROLE_ARN
   node:
     create: true
     name: ebs-csi-node-sa
     annotations: {}
 
 storageClasses: []
-  # - name: gp3
-  #   annotations:
-  #     storageclass.kubernetes.io/is-default-class: "true"
-  #   # labels:
-  #   #   my-label-is: default
-  #   parameters:
-  #     type: gp3
-  #     fsType: ext4 # AWS default: ext4
-  #     # encrypted: false # volume encrypt with kms (default: false)
-  #     # kmsKeyId: arn:aws:kms:us-west-2:111122223333:alias/ExampleAlias
-  #   reclaimPolicy: Delete
-  #   volumeBindingMode: WaitForFirstConsumer
-  #   allowVolumeExpansion: true
-  # - name: gp2
-  #   annotations:
-  #     storageclass.kubernetes.io/is-default-class: "false"
-  #   # labels:
-  #   #   my-label-is: default
-  #   parameters:
-  #     type: gp2
-  #     fsType: ext4 # AWS default: ext4
-  #     # encrypted: false # volume encrypt with kms (default: false)
-  #     # kmsKeyId: arn:aws:kms:us-west-2:111122223333:alias/ExampleAlias
-  #   reclaimPolicy: Delete
-  #   volumeBindingMode: WaitForFirstConsumer
-  #   allowVolumeExpansion: false
