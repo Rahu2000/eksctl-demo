@@ -1,0 +1,15 @@
+---
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: STORAGE_CLASS_NAME
+provisioner: efs.csi.aws.com
+mountOptions:
+  - tls
+parameters:
+  provisioningMode: efs-ap # only support `efs-ap`
+  fileSystemId: FILE_SYSTEM_ID
+  # directoryPerms: "700"
+  # gidRangeStart: "1000"
+  # gidRangeEnd: "2000"
+  # basePath: "/"

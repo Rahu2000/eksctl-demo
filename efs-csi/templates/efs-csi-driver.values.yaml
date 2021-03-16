@@ -1,0 +1,108 @@
+replicaCount: 2
+
+image: {}
+  # repository: amazon/aws-efs-csi-driver
+  # tag: "v1.1.1"
+  # pullPolicy: IfNotPresent
+
+sidecars: {}
+  # livenessProbeImage:
+  #   repository: quay.io/k8scsi/livenessprobe
+  #   tag: "v2.0.0"
+  # nodeDriverRegistrarImage:
+  #   repository: quay.io/k8scsi/csi-node-driver-registrar
+  #   tag: "v1.3.0"
+  # csiProvisionerImage:
+  #   repository: k8s.gcr.io/sig-storage/csi-provisioner
+  #   tag: "v2.0.4"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+podAnnotations: {}
+
+resources:
+  limits:
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+nodeSelector: {}
+
+tolerations:
+  - key: operator
+    operator: Equal
+    value: "true"
+    effect: NoSchedule
+
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: role
+              operator: In
+              values:
+                - operator
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 1
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/instance: aws-efs-csi-driver-controller
+                app.kubernetes.io/name: aws-efs-csi-driver
+            namespaces:
+              - kube-system
+            topologyKey: kubernetes.io/hostname
+
+node:
+  podAnnotations: {}
+  tolerations: []
+
+logLevel: 5
+
+hostAliases: {}
+  # for cross VPC EFS, you need to poison or overwrite the DNS for the efs volume as per
+  # https://docs.aws.amazon.com/efs/latest/ug/efs-different-vpc.html#wt6-efs-utils-step3
+  # implementing the suggested solution found here:
+  # https://github.com/kubernetes-sigs/aws-efs-csi-driver/issues/240#issuecomment-676849346
+  # EFS Vol ID, IP, Region
+  # "fs-01234567":
+  #   ip: 10.10.2.2
+  #   region: us-east-2
+
+dnsPolicy: ""
+dnsConfig: {}
+  # Example config which uses the AWS nameservers
+  # dnsPolicy: "None"
+  # dnsConfig:
+  #   nameservers:
+  #     - 169.254.169.253
+
+# The serviceAccount is not yet supported (1.1.1)
+serviceAccount:
+  controller:
+    create: CREATE_CONTROLLER
+    annotations:
+      eks.amazonaws.com/role-arn: IAM_ROLE_ARN
+    name: SERVICE_ACCOUNT
+
+# The controller is not yet supported (v1.1.1)
+controller:
+  create: CREATE_CONTROLLER
+
+storageClasses: []
+# Add StorageClass resources like:
+# - name: efs-sc
+#   mountOptions:
+#   - tls
+#   parameters:
+#     provisioningMode: efs-ap
+#     fileSystemId: fs-92107410
+#     directoryPerms: "700"
+#     gidRangeStart: "1000"
+#     gidRangeEnd: "2000"
+#     basePath: "/dynamic_provisioning"
