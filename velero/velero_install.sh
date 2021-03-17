@@ -14,12 +14,12 @@ set -x
 export CLUSTER_NAME="eksworkshop"
 export IAM_POLICY_NAME="AmazoneEKS_S3_Policy_For_Velero"
 export IAM_ROLE_NAME="AmazoneEKS_S3_Role_For_Velero"
-export APP_VERSION="v1.5.3"
+export APP_VERSION="v1.1.0"
 export VELERO_BUCKET_PREFIX="velero-$CLUSTER_NAME"
 export SNAPSHOT_BUCKET="snapshot"
 export BACKUP_BUCKET="backup"
 export SERVICE_ACCOUNT="velero"
-export NAMESPACE="kube-system"
+export NAMESPACE="velero"
 export CHART_VERSION="2.15.0"
 export REGION="ap-northeast-2"
 
@@ -65,15 +65,20 @@ if [ "Darwin" == "$LOCAL_OS_KERNEL" ]; then
   sed -i.bak "s|SERVICE_ACCOUNT|${SERVICE_ACCOUNT}|g" ./templates/velero.values.yaml
   sed -i '' "s|IAM_ROLE_ARN|${IAM_ROLE_ARN}|g" ./templates/velero.values.yaml
   sed -i '' "s|APP_VERSION|${APP_VERSION}|g" ./templates/velero.values.yaml
+  sed -i '' "s|BUCKET_NAME|${BUCKET_NAME}|g" ./templates/velero.values.yaml
+  sed -i '' "s|REGION|${REGION}|g" ./templates/velero.values.yaml
 else
   sed -i.bak "s/SERVICE_ACCOUNT/${SERVICE_ACCOUNT}/g" ./templates/velero.values.yaml
   sed -i "s/IAM_ROLE_ARN/${IAM_ROLE_ARN}/g" ./templates/velero.values.yaml
   sed -i "s/APP_VERSION/${APP_VERSION}/g" ./templates/velero.values.yaml
+  sed -i "s/BUCKET_NAME/${BUCKET_NAME}/g" ./templates/velero.values.yaml
+  sed -i "s/REGION/${REGION}/g" ./templates/velero.values.yaml
 fi
 
 helm upgrade --install velero \
   vmware-tanzu/velero \
   --version=${CHART_VERSION} \
   --namespace ${NAMESPACE} \
-  -f ./templates/ebs-csi-driver.values.yaml \
+  --create-namespace \
+  -f ./templates/velero.values.yaml \
   --wait
