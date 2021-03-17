@@ -28,7 +28,7 @@ source ../common/utils.sh
 ##############################################################
 # Bucket Create
 ##############################################################
-BACKUP_BUCKET_NAME="${VELERO_BUCKET_PREFIX}-${SNAPSHOT_BUCKET}"
+BACKUP_BUCKET_NAME="${VELERO_BUCKET_PREFIX}-${BACKUP_BUCKET}"
 SNAPSHOT_BUCKET_NAME=$BACKUP_BUCKET_NAME
 
 if [[ -z $(aws s3 ls 2>/dev/null | grep "${BACKUP_BUCKET_NAME}") ]]; then

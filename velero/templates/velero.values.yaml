@@ -121,7 +121,7 @@ configuration:
     # `configuration.provider` will be used instead.
     provider: aws
     # bucket is the name of the bucket to store backups in. Required.
-    bucket: BUCKET_NAME
+    bucket: BACKUP_BUCKET_NAME
     # caCert defines a base64 encoded CA bundle to use when verifying TLS connections to the provider.
     caCert:
     # prefix is the directory under which all Velero data should be stored within the bucket. Optional.
@@ -131,7 +131,7 @@ configuration:
     config:
       region: REGION
       s3ForcePathStyle: true
-      s3Url: s3.REGION.amazonaws.com
+      s3Url: https://s3.REGION.amazonaws.com
     #  kmsKeyId:
     #  resourceGroup:
     #  The ID of the subscription containing the storage account, if different from the cluster’s subscription. (Azure only)
