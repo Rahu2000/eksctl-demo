@@ -130,7 +130,7 @@ configuration:
     # for details of required/optional fields for your provider.
     config:
       region: REGION
-      s3ForcePathStyle:
+      s3ForcePathStyle: true
       s3Url: s3.REGION.amazonaws.com
     #  kmsKeyId:
     #  resourceGroup:
@@ -152,8 +152,9 @@ configuration:
     provider: aws
     # Additional provider-specific configuration. See link above
     # for details of required/optional fields for your provider.
-    config: {}
-  #    region:
+    config:
+      bucket: SNAPSHOT_BUCKET_NAME
+      region: REGION
   #    apitimeout:
   #    resourceGroup:
   #    The ID of the subscription where volume snapshots should be stored, if different from the cluster’s subscription. If specified, also requires `configuration.volumeSnapshotLocation.config.resourceGroup`to be set. (Azure only)
