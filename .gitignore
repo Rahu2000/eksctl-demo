@@ -3,7 +3,6 @@
 
 # ignore
 example
-velero
 
 # ignore temporary files
 */**/*.bak
