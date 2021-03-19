@@ -22,6 +22,7 @@ export SERVICE_ACCOUNT="velero"
 export NAMESPACE="velero"
 export CHART_VERSION="2.15.0"
 export REGION="ap-northeast-2"
+export CLEANUP_CRDS="true" # Caution: Cleaning up CRDs will delete the BackupStorageLocation and VolumeSnapshotLocation instances, which would have to be reconfigured.
 
 source ../common/utils.sh
 
@@ -69,6 +70,7 @@ if [ "Darwin" == "$LOCAL_OS_KERNEL" ]; then
   sed -i '' "s|BACKUP_BUCKET_NAME|${BACKUP_BUCKET_NAME}|g" ./templates/velero.values.yaml
   sed -i '' "s|SNAPSHOT_BUCKET_NAME|${SNAPSHOT_BUCKET_NAME}|g" ./templates/velero.values.yaml
   sed -i '' "s|REGION|${REGION}|g" ./templates/velero.values.yaml
+  sed -i '' "s|CLEANUP_CRDS|${CLEANUP_CRDS}|g" ./templates/velero.values.yaml
 else
   sed -i.bak "s/SERVICE_ACCOUNT/${SERVICE_ACCOUNT}/g" ./templates/velero.values.yaml
   sed -i "s/IAM_ROLE_ARN/${IAM_ROLE_ARN}/g" ./templates/velero.values.yaml
@@ -76,6 +78,7 @@ else
   sed -i "s/BACKUP_BUCKET_NAME/${BACKUP_BUCKET_NAME}/g" ./templates/velero.values.yaml
   sed -i "s/SNAPSHOT_BUCKET_NAME/${SNAPSHOT_BUCKET_NAME}/g" ./templates/velero.values.yaml
   sed -i "s/REGION/${REGION}/g" ./templates/velero.values.yaml
+  sed -i "s/CLEANUP_CRDS/${CLEANUP_CRDS}/g" ./templates/velero.values.yaml
 fi
 
 helm upgrade --install velero \

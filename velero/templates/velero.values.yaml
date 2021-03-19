@@ -153,7 +153,6 @@ configuration:
     # Additional provider-specific configuration. See link above
     # for details of required/optional fields for your provider.
     config:
-      bucket: SNAPSHOT_BUCKET_NAME
       region: REGION
   #    apitimeout:
   #    resourceGroup:
@@ -324,3 +323,4 @@ configMaps: {}
 ##
 ## End of additional Velero resource settings.
 ##
+cleanUpCRDs: CLEANUP_CRDS

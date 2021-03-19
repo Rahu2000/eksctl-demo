@@ -15,6 +15,7 @@ export CLUSTER_NAME="eksworkshop"
 export IAM_POLICY_NAME="AmazonEKS_EBS_CSI_Driver_Policy"
 export CONTROLLER_IAM_ROLE_NAME="AmazonEKS_EBS_CSI_Driver_Role_For_Controller"
 export CONTROLLER_SERVICE_ACCOUNT="ebs-csi-controller"
+export SNAPSHOT_ENABLE="true" # [true|false]
 export SNAPSHOT_IAM_ROLE_NAME="AmazonEKS_EBS_CSI_Driver_Role_For_Snapshot"
 export SNAPSHOT_SERVICE_ACCOUNT="ebs-csi-snapshot"
 export NAMESPACE="kube-system"
@@ -37,7 +38,22 @@ fi
 
 CONTROLLER_IAM_ROLE_ARN=$(createRole "$CLUSTER_NAME" "$NAMESPACE" "$CONTROLLER_SERVICE_ACCOUNT" "$CONTROLLER_IAM_ROLE_NAME" "$IAM_POLICY_ARN")
 
-SNAPSHOT_IAM_ROLE_ARN=$(createRole "$CLUSTER_NAME" "$NAMESPACE" "$SNAPSHOT_SERVICE_ACCOUNT" "$SNAPSHOT_IAM_ROLE_NAME" "$IAM_POLICY_ARN")
+if [[  "true" == $SNAPSHOT_ENABLE ]]; then
+  SNAPSHOT_IAM_ROLE_ARN=$(createRole "$CLUSTER_NAME" "$NAMESPACE" "$SNAPSHOT_SERVICE_ACCOUNT" "$SNAPSHOT_IAM_ROLE_NAME" "$IAM_POLICY_ARN")
+else
+  SNAPSHOT_ENABLE="false"
+fi
+
+##############################################################
+# Install EXTERNAL SNAPSHOT CSI CRD
+##############################################################
+if [[  "true" == $SNAPSHOT_ENABLE ]]; then
+  kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/master/client/config/crd/snapshot.storage.k8s.io_volumesnapshotclasses.yaml
+
+  kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/master/client/config/crd/snapshot.storage.k8s.io_volumesnapshotcontents.yaml
+
+  kubectl apply -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/master/client/config/crd/snapshot.storage.k8s.io_volumesnapshots.yaml
+fi
 
 ##############################################################
 # Install AWS EBS CSI DRIVER with Helm
@@ -53,14 +69,22 @@ if [ "Darwin" == "$LOCAL_OS_KERNEL" ]; then
   sed -i.bak "s|REGION|${REGION}|g" ./templates/ebs-csi-driver.values.yaml
   sed -i '' "s|CONTROLLER_SERVICE_ACCOUNT|${CONTROLLER_SERVICE_ACCOUNT}|g" ./templates/ebs-csi-driver.values.yaml
   sed -i '' "s|CONTROLLER_IAM_ROLE_ARN|${CONTROLLER_IAM_ROLE_ARN}|g" ./templates/ebs-csi-driver.values.yaml
-  sed -i '' "s|SNAPSHOT_SERVICE_ACCOUNT|${SNAPSHOT_SERVICE_ACCOUNT}|g" ./templates/ebs-csi-driver.values.yaml
-  sed -i '' "s|SNAPSHOT_IAM_ROLE_ARN|${SNAPSHOT_IAM_ROLE_ARN}|g" ./templates/ebs-csi-driver.values.yaml
 else
   sed -i.bak "s/REGION/${REGION}/g" ./templates/ebs-csi-driver.values.yaml
   sed -i '' "s/CONTROLLER_SERVICE_ACCOUNT/${CONTROLLER_SERVICE_ACCOUNT}/g" ./templates/ebs-csi-driver.values.yaml
   sed -i '' "s/CONTROLLER_IAM_ROLE_ARN|${CONTROLLER_IAM_ROLE_ARN}/g" ./templates/ebs-csi-driver.values.yaml
-  sed -i '' "s/SNAPSHOT_SERVICE_ACCOUNT/${SNAPSHOT_SERVICE_ACCOUNT}/g" ./templates/ebs-csi-driver.values.yaml
-  sed -i '' "s/SNAPSHOT_IAM_ROLE_ARN/${SNAPSHOT_IAM_ROLE_ARN}/g" ./templates/ebs-csi-driver.values.yaml
+fi
+
+if [[  "true" == $SNAPSHOT_ENABLE ]]; then
+  if [ "Darwin" == "$LOCAL_OS_KERNEL" ]; then
+    sed -i '' "s|SNAPSHOT_ENABLE|${SNAPSHOT_ENABLE}|g" ./templates/ebs-csi-driver.values.yaml
+    sed -i '' "s|SNAPSHOT_SERVICE_ACCOUNT|${SNAPSHOT_SERVICE_ACCOUNT}|g" ./templates/ebs-csi-driver.values.yaml
+    sed -i '' "s|SNAPSHOT_IAM_ROLE_ARN|${SNAPSHOT_IAM_ROLE_ARN}|g" ./templates/ebs-csi-driver.values.yaml
+  else
+    sed -i "s/SNAPSHOT_ENABLE/${SNAPSHOT_ENABLE}/g" ./templates/ebs-csi-driver.values.yaml
+    sed -i "s/SNAPSHOT_SERVICE_ACCOUNT/${SNAPSHOT_SERVICE_ACCOUNT}/g" ./templates/ebs-csi-driver.values.yaml
+    sed -i "s/SNAPSHOT_IAM_ROLE_ARN/${SNAPSHOT_IAM_ROLE_ARN}/g" ./templates/ebs-csi-driver.values.yaml
+  fi
 fi
 
 helm upgrade --install aws-ebs-csi-driver \
@@ -86,4 +110,6 @@ kubectl apply -f ./templates/added-storage-class.yaml
 ## Create a PodDisruptionBudget
 ##############################################################
 kubectl apply -f ./templates/ebs-csi-controller-pdb.yaml
-kubectl apply -f ./templates/ebs-snapshot-controller-pdb.yaml
+if [[  "true" == $SNAPSHOT_ENABLE ]]; then
+  kubectl apply -f ./templates/ebs-snapshot-controller-pdb.yaml
+fi

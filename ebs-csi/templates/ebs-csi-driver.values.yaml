@@ -13,7 +13,7 @@ podAnnotations: {}
 
 enableVolumeScheduling: true
 enableVolumeResizing: true
-enableVolumeSnapshot: true
+enableVolumeSnapshot: SNAPSHOT_ENABLE
 
 # The "maximum number of attachable volumes" per node
 # Ref: https://docs.aws.amazon.com/ko_kr/AWSEC2/latest/UserGuide/volume_limits.html
@@ -92,7 +92,7 @@ serviceAccount:
       eks.amazonaws.com/role-arn: CONTROLLER_IAM_ROLE_ARN
 
   snapshot:
-    create: true
+    create: SNAPSHOT_ENABLE
     name: SNAPSHOT_SERVICE_ACCOUNT
     annotations:
       eks.amazonaws.com/role-arn: SNAPSHOT_IAM_ROLE_ARN
