@@ -32,8 +32,8 @@ source ../common/utils.sh
 BACKUP_BUCKET_NAME="${VELERO_BUCKET_PREFIX}-${BACKUP_BUCKET}"
 SNAPSHOT_BUCKET_NAME=$BACKUP_BUCKET_NAME
 
-if [[ -z $(aws s3 ls 2>/dev/null | grep "${BACKUP_BUCKET_NAME}") ]]; then
-    aws s3 mb "s3://${BACKUP_BUCKET_NAME}"
+if [[ -z $(aws s3 ls --region "$REGION" 2>/dev/null | grep "${BACKUP_BUCKET_NAME}") ]]; then
+  aws s3 mb "s3://${BACKUP_BUCKET_NAME}" --region "$REGION"
 fi
 
 ##############################################################

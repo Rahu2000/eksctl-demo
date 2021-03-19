@@ -50,6 +50,12 @@ initContainers:
     volumeMounts:
       - mountPath: /target
         name: plugins
+  - name: velero-plugin-for-csi
+    image: 'velero/velero-plugin-for-csi:v0.1.2'
+    volumeMounts:
+      - name: plugins
+        mountPath: /target
+
 
 # SecurityContext to use for the Velero deployment. Optional.
 # Set fsGroup for `AWS IAM Roles for Service Accounts`
@@ -208,7 +214,7 @@ configuration:
     AWS_CLUSTER_NAME: CLUSTER_NAME
 
   # Comma separated list of velero feature flags. default: empty
-  features:
+  features: EnableCSI
 
   # Set log-level for Velero pod. Default: info. Other options: debug, warning, error, fatal, panic.
   logLevel:
