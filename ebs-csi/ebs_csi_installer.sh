@@ -95,7 +95,7 @@ helm upgrade --install aws-ebs-csi-driver \
   --wait
 
 ##############################################################
-# Create Storage Class
+# Create Storage Classes
 ##############################################################
 ## Remove in-tree gp2 driver and recreate
 if [[ "kubernetes.io/aws-ebs" == "$(kubectl get sc gp2 | grep gp2 | awk -F ' ' '{ print $3 }')" ]]; then
@@ -105,6 +105,13 @@ fi
 
 ## Add gp3 and io2 type StorageClass
 kubectl apply -f ./templates/added-storage-class.yaml
+
+##############################################################
+## Create a EBS Volume Snapshot Class
+##############################################################
+if [[  "true" == $SNAPSHOT_ENABLE ]]; then
+  kubectl apply -f ./templates/ebs-volume-snapshot-clsss.yaml
+fi
 
 ##############################################################
 ## Create a PodDisruptionBudget
