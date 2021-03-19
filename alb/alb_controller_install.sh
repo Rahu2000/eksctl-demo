@@ -31,9 +31,6 @@ LOCAL_OS_KERNEL="$(uname -a | awk -F ' ' ' {print $1} ')"
 ##############################################################
 # Install the cert-manager
 ##############################################################
-## Apply priority class
-kubectl apply -f ./templates/operator.priority.class.yaml
-
 ## Install the cert-manager CRD
 kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/"${CERT_MANGER_VERSION}"/cert-manager.crds.yaml
 

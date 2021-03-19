@@ -58,3 +58,6 @@ helm upgrade --install \
 
 # ## TODO
 # ## Add coredns hpa
+
+## Apply priority class
+kubectl apply -f ./templates/operator.priority.class.yaml
