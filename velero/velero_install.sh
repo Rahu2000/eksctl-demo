@@ -69,6 +69,7 @@ if [ "Darwin" == "$LOCAL_OS_KERNEL" ]; then
   sed -i '' "s|APP_VERSION|${APP_VERSION}|g" ./templates/velero.values.yaml
   sed -i '' "s|BACKUP_BUCKET_NAME|${BACKUP_BUCKET_NAME}|g" ./templates/velero.values.yaml
   sed -i '' "s|SNAPSHOT_BUCKET_NAME|${SNAPSHOT_BUCKET_NAME}|g" ./templates/velero.values.yaml
+  sed -i '' "s|CLUSTER_NAME|${CLUSTER_NAME}|g" ./templates/velero.values.yaml
   sed -i '' "s|REGION|${REGION}|g" ./templates/velero.values.yaml
   sed -i '' "s|CLEANUP_CRDS|${CLEANUP_CRDS}|g" ./templates/velero.values.yaml
 else
@@ -77,6 +78,7 @@ else
   sed -i "s/APP_VERSION/${APP_VERSION}/g" ./templates/velero.values.yaml
   sed -i "s/BACKUP_BUCKET_NAME/${BACKUP_BUCKET_NAME}/g" ./templates/velero.values.yaml
   sed -i "s/SNAPSHOT_BUCKET_NAME/${SNAPSHOT_BUCKET_NAME}/g" ./templates/velero.values.yaml
+  sed -i "s/CLUSTER_NAME/${CLUSTER_NAME}/g" ./templates/velero.values.yaml
   sed -i "s/REGION/${REGION}/g" ./templates/velero.values.yaml
   sed -i "s/CLEANUP_CRDS/${CLEANUP_CRDS}/g" ./templates/velero.values.yaml
 fi
