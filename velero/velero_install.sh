@@ -14,7 +14,8 @@ set -x
 export CLUSTER_NAME="eksworkshop"
 export IAM_POLICY_NAME="AmazoneEKS_S3_Policy_For_Velero"
 export IAM_ROLE_NAME="AmazoneEKS_S3_Role_For_Velero"
-export APP_VERSION="v1.1.0"
+export AWS_CSI_VERSION="v1.1.0"
+export VELERO_CSI_VERSION="v0.1.2"
 export VELERO_BUCKET_PREFIX="velero-$CLUSTER_NAME"
 export SNAPSHOT_BUCKET="snapshot"
 export BACKUP_BUCKET="backup"
@@ -66,7 +67,8 @@ helm repo update
 if [ "Darwin" == "$LOCAL_OS_KERNEL" ]; then
   sed -i.bak "s|SERVICE_ACCOUNT|${SERVICE_ACCOUNT}|g" ./templates/velero.values.yaml
   sed -i '' "s|IAM_ROLE_ARN|${IAM_ROLE_ARN}|g" ./templates/velero.values.yaml
-  sed -i '' "s|APP_VERSION|${APP_VERSION}|g" ./templates/velero.values.yaml
+  sed -i '' "s|AWS_CSI_VERSION|${AWS_CSI_VERSION}|g" ./templates/velero.values.yaml
+  sed -i '' "s|VELERO_CSI_VERSION|${VELERO_CSI_VERSION}|g" ./templates/velero.values.yaml
   sed -i '' "s|BACKUP_BUCKET_NAME|${BACKUP_BUCKET_NAME}|g" ./templates/velero.values.yaml
   sed -i '' "s|SNAPSHOT_BUCKET_NAME|${SNAPSHOT_BUCKET_NAME}|g" ./templates/velero.values.yaml
   sed -i '' "s|CLUSTER_NAME|${CLUSTER_NAME}|g" ./templates/velero.values.yaml
@@ -75,7 +77,8 @@ if [ "Darwin" == "$LOCAL_OS_KERNEL" ]; then
 else
   sed -i.bak "s/SERVICE_ACCOUNT/${SERVICE_ACCOUNT}/g" ./templates/velero.values.yaml
   sed -i "s/IAM_ROLE_ARN/${IAM_ROLE_ARN}/g" ./templates/velero.values.yaml
-  sed -i "s/APP_VERSION/${APP_VERSION}/g" ./templates/velero.values.yaml
+  sed -i "s/AWS_CSI_VERSION/${AWS_CSI_VERSION}/g" ./templates/velero.values.yaml
+  sed -i "s/VELERO_CSI_VERSION/${VELERO_CSI_VERSION}/g" ./templates/velero.values.yaml
   sed -i "s/BACKUP_BUCKET_NAME/${BACKUP_BUCKET_NAME}/g" ./templates/velero.values.yaml
   sed -i "s/SNAPSHOT_BUCKET_NAME/${SNAPSHOT_BUCKET_NAME}/g" ./templates/velero.values.yaml
   sed -i "s/CLUSTER_NAME/${CLUSTER_NAME}/g" ./templates/velero.values.yaml
