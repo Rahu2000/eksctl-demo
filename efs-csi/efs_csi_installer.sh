@@ -64,6 +64,7 @@ if [ "Darwin" == "$LOCAL_OS_KERNEL" ]; then
 else
   sed -i.bak "s/CREATE_CONTROLLER/${CREATE_CONTROLLER}/g" ./templates/efs-csi-driver.values.yaml
   if [[ "true" == $CREATE_CONTROLLER ]]; then
+    IAM_ROLE_ARN=$(echo ${IAM_ROLE_ARN} | sed 's|\/|\\/|')
     sed -i "s/SERVICE_ACCOUNT/${SERVICE_ACCOUNT}/g" ./templates/efs-csi-driver.values.yaml
     sed -i "s/IAM_ROLE_ARN|${IAM_ROLE_ARN}/g" ./templates/efs-csi-driver.values.yaml
   fi

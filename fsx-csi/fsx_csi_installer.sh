@@ -47,8 +47,9 @@ if [ "Darwin" == "$LOCAL_OS_KERNEL" ]; then
   sed -i.bak "s|IAM_ROLE_ARN|${IAM_ROLE_ARN}|g" ./templates/fsx-csi-driver.values.yaml
   sed -i '' "s|SERVICE_ACCOUNT|${SERVICE_ACCOUNT}|g" ./templates/fsx-csi-driver.values.yaml
 else
+  IAM_ROLE_ARN=$(echo ${IAM_ROLE_ARN} | sed 's|\/|\\/|')
   sed -i.bak "s/IAM_ROLE_ARN/${IAM_ROLE_ARN}/g" ./templates/fsx-csi-driver.values.yaml
-  sed -i '' "s/SERVICE_ACCOUNT/${SERVICE_ACCOUNT}/g" ./templates/fsx-csi-driver.values.yaml
+  sed -i "s/SERVICE_ACCOUNT/${SERVICE_ACCOUNT}/g" ./templates/fsx-csi-driver.values.yaml
 fi
 
 helm upgrade --install aws-fsx-csi-driver \

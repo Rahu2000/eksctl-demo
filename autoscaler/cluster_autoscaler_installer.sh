@@ -53,9 +53,9 @@ if [ "Darwin" == "$LOCAL_OS_KERNEL" ]; then
 else
   ROLE_ARN=$(echo ${ROLE_ARN} | sed 's/\//\\//')
   sed -i.bak "s/IAM_ROLE_NAME/${ROLE_ARN}/g" ./templates/cluster-autoscaler.values.yaml
-  sed -i '' "s/CLUSTER_NAME/${CLUSTER_NAME}/g" ./templates/cluster-autoscaler.values.yaml
-  sed -i '' "s/RELEASE_NAME/${RELEASE_NAME}/g" ./templates/cluster-autoscaler.values.yaml
-  sed -i '' "s/SERVICE_ACCOUNT/${SERVICE_ACCOUNT}/g" ./templates/cluster-autoscaler.values.yaml
+  sed -i "s/CLUSTER_NAME/${CLUSTER_NAME}/g" ./templates/cluster-autoscaler.values.yaml
+  sed -i "s/RELEASE_NAME/${RELEASE_NAME}/g" ./templates/cluster-autoscaler.values.yaml
+  sed -i "s/SERVICE_ACCOUNT/${SERVICE_ACCOUNT}/g" ./templates/cluster-autoscaler.values.yaml
 fi
 
 ## Install the cluster-autoscaler helm chart

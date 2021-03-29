@@ -89,7 +89,7 @@ else
   sed -i "${SA_LINE_NUM} a XXXXeks.amazonaws.com/role-arn: ${IAM_ROLE_ARN}" "${ALB_CONTROLLER_FILE}_full.yaml"
   sed -i "${SA_LINE_NUM} a XXannotations:" "${ALB_CONTROLLER_FILE}_full.yaml"
   sed -i 's/XX/  /g' "${ALB_CONTROLLER_FILE}_full.yaml"
-  sed -i '' "s/your-cluster-name/${CLUSTER_NAME}/g" "${ALB_CONTROLLER_FILE}_full.yaml"
+  sed -i "s/your-cluster-name/${CLUSTER_NAME}/g" "${ALB_CONTROLLER_FILE}_full.yaml"
   # sed -i '' "s/200Mi/500Mi/g" "${ALB_CONTROLLER_FILE}_full.yaml"
 fi
 

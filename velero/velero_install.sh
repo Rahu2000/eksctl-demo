@@ -75,6 +75,7 @@ if [ "Darwin" == "$LOCAL_OS_KERNEL" ]; then
   sed -i '' "s|REGION|${REGION}|g" ./templates/velero.values.yaml
   sed -i '' "s|CLEANUP_CRDS|${CLEANUP_CRDS}|g" ./templates/velero.values.yaml
 else
+  IAM_ROLE_ARN=$(echo ${IAM_ROLE_ARN} | sed 's|\/|\\/|')
   sed -i.bak "s/SERVICE_ACCOUNT/${SERVICE_ACCOUNT}/g" ./templates/velero.values.yaml
   sed -i "s/IAM_ROLE_ARN/${IAM_ROLE_ARN}/g" ./templates/velero.values.yaml
   sed -i "s/AWS_CSI_VERSION/${AWS_CSI_VERSION}/g" ./templates/velero.values.yaml
