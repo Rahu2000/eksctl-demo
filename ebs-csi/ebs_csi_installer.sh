@@ -70,9 +70,10 @@ if [ "Darwin" == "$LOCAL_OS_KERNEL" ]; then
   sed -i '' "s|CONTROLLER_SERVICE_ACCOUNT|${CONTROLLER_SERVICE_ACCOUNT}|g" ./templates/ebs-csi-driver.values.yaml
   sed -i '' "s|CONTROLLER_IAM_ROLE_ARN|${CONTROLLER_IAM_ROLE_ARN}|g" ./templates/ebs-csi-driver.values.yaml
 else
+  CONTROLLER_IAM_ROLE_ARN=$(echo ${CONTROLLER_IAM_ROLE_ARN} | sed 's|\/|\\/|')
   sed -i.bak "s/REGION/${REGION}/g" ./templates/ebs-csi-driver.values.yaml
-  sed -i '' "s/CONTROLLER_SERVICE_ACCOUNT/${CONTROLLER_SERVICE_ACCOUNT}/g" ./templates/ebs-csi-driver.values.yaml
-  sed -i '' "s/CONTROLLER_IAM_ROLE_ARN|${CONTROLLER_IAM_ROLE_ARN}/g" ./templates/ebs-csi-driver.values.yaml
+  sed -i "s/CONTROLLER_SERVICE_ACCOUNT/${CONTROLLER_SERVICE_ACCOUNT}/g" ./templates/ebs-csi-driver.values.yaml
+  sed -i "s/CONTROLLER_IAM_ROLE_ARN/${CONTROLLER_IAM_ROLE_ARN}/g" ./templates/ebs-csi-driver.values.yaml
 fi
 
 if [[  "true" == $SNAPSHOT_ENABLE ]]; then
@@ -81,6 +82,7 @@ if [[  "true" == $SNAPSHOT_ENABLE ]]; then
     sed -i '' "s|SNAPSHOT_SERVICE_ACCOUNT|${SNAPSHOT_SERVICE_ACCOUNT}|g" ./templates/ebs-csi-driver.values.yaml
     sed -i '' "s|SNAPSHOT_IAM_ROLE_ARN|${SNAPSHOT_IAM_ROLE_ARN}|g" ./templates/ebs-csi-driver.values.yaml
   else
+    SNAPSHOT_IAM_ROLE_ARN=$(echo ${SNAPSHOT_IAM_ROLE_ARN} | sed 's|\/|\\/|')
     sed -i "s/SNAPSHOT_ENABLE/${SNAPSHOT_ENABLE}/g" ./templates/ebs-csi-driver.values.yaml
     sed -i "s/SNAPSHOT_SERVICE_ACCOUNT/${SNAPSHOT_SERVICE_ACCOUNT}/g" ./templates/ebs-csi-driver.values.yaml
     sed -i "s/SNAPSHOT_IAM_ROLE_ARN/${SNAPSHOT_IAM_ROLE_ARN}/g" ./templates/ebs-csi-driver.values.yaml
