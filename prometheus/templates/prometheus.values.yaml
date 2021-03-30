@@ -1,0 +1,899 @@
+## Global Docker image parameters
+## Please, note that this will override the image parameters, including dependencies, configured to use the global value
+## Current available global Docker image parameters: imageRegistry and imagePullSecrets
+##
+global:
+  #   imageRegistry: myRegistryName
+  #   imagePullSecrets:
+  #     - myRegistryKeySecretName
+  #   storageClass: myStorageClass
+
+  labels: {}
+  # foo: bar
+
+## String to partially override prometheus.fullname template (will maintain the release name)
+##
+# nameOverride:
+
+## String to fully override prometheus.fullname template
+##
+# fullnameOverride:
+
+## Role Based Access
+## ref: https://kubernetes.io/docs/admin/authorization/rbac/
+##
+rbac:
+  create: true
+  apiVersion: v1beta1
+  pspEnabled: true
+
+operator:
+  enabled: true
+  image: {}
+    # registry: docker.io
+    # repository: bitnami/prometheus-operator
+    # tag: 0.46.0-debian-10-r21
+    # pullPolicy: IfNotPresent
+    # pullSecrets:
+    #   - myRegistryKeySecretName
+  hostAliases: []
+  serviceAccount:
+    create: true
+    # name:
+
+  ## Use an alternate scheduler, e.g. "stork".
+  ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
+  # schedulerName:
+
+  securityContext:
+    enabled: true
+    runAsUser: 1001
+    fsGroup: 1001
+
+  ## Prometheus Operator Service
+  service:
+    type: ClusterIP
+    port: 8080
+    # clusterIP: None # headleass Service
+    ## Set the LoadBalancer service type to internal only.
+    ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#internal-load-balancer
+    # loadBalancerIP:
+
+    ## Load Balancer sources
+    ## https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service
+    # loadBalancerSourceRanges:
+    # - 10.10.10.0/24
+
+    ## Denotes if this Service desires to route external traffic to node-local or cluster-wide endpoints.
+    ## There are two available options: Cluster (default) and Local.
+    ## ref: https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip
+    ##
+    externalTrafficPolicy: Cluster
+
+    ## Specifies the health check node port (numeric port number) for the service
+    ## if externalTrafficPolicy is set to Local.
+    ## ref: https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip
+    ##
+    # healthCheckNodePort:
+
+    annotations: {}
+
+  ## Create a servicemonitor for the operator
+  serviceMonitor:
+    enabled: true
+    interval: ""
+    metricRelabelings: []
+
+    ## Relabel configs
+    ## ref: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config
+    relabelings: []
+  resources: {}
+  podAntiAffinityPreset: soft
+
+  nodeAffinityPreset:
+    type: "soft"
+    key: "role"
+    values:
+    - operator
+
+  # affinity: {}
+  # nodeSelector: {}
+  tolerations:
+  - key: operator
+    operator: Equal
+    value: "true"
+    effect: NoSchedule
+
+  priorityClassName: "system-cluster-critical"
+
+  # livenessProbe:
+  #   initialDelaySeconds: 120
+  #   periodSeconds: 10
+  #   timeoutSeconds: 5
+  #   failureThreshold: 6
+  #   successThreshold: 1
+
+  # readinessProbe:
+  #   initialDelaySeconds: 30
+  #   periodSeconds: 10
+  #   timeoutSeconds: 5
+  #   failureThreshold: 6
+  #   successThreshold: 1
+
+  logLevel: info
+  logFormat: logfmt
+
+  # configReloaderCpu: 100m
+  # configReloaderMemory: 25Mi
+
+  kubeletService:
+    enabled: true
+    namespace: kube-system
+
+  ## Prometheus Configmap-reload image to use for reloading configmaps
+  ## defaults to Bitnami Prometheus Operator (ref: https://hub.docker.com/r/bitnami/prometheus-operator/tags/)
+  prometheusConfigReloader:
+    image: {}
+    # registry:
+    # repository:
+    # tag:
+    # pullSecrets:
+    #   - myRegistryKeySecretName
+
+## Deploy a Prometheus instance
+prometheus:
+  enabled: true
+
+  image: {}
+    # registry: docker.io
+    # repository: bitnami/prometheus
+    # tag: 2.25.2-debian-10-r7
+    # pullSecrets:
+    #   - myRegistryKeySecretName
+
+  serviceAccount:
+    create: true
+    name: SERVICE_ACCOUNT
+    annotations:
+      eks.amazonaws.com/role-arn: IAM_ROLE_ARN
+
+  securityContext:
+    enabled: true
+    runAsUser: 1001
+    fsGroup: 1001
+
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+
+  ## Prometheus Service
+  service:
+    type: ClusterIP
+    port: 9090
+    # clusterIP: None
+    # nodePort: 30090
+    # loadBalancerIP:
+    # loadBalancerSourceRanges:
+    # - 10.10.10.0/24
+    externalTrafficPolicy: Cluster
+    # healthCheckNodePort:
+    # stickySessions: true
+    annotations: {}
+
+  serviceMonitor:
+    enabled: true
+    # interval: ""
+    metricRelabelings: []
+    relabelings: []
+
+  ## Configure the ingress resource that allows you to access the
+  ## Alertmanager installation. Set up the URL
+  ## ref: http://kubernetes.io/docs/user-guide/ingress/
+  ingress:
+    enabled: false
+
+    ## Set this to true in order to add the corresponding annotations for cert-manager
+    certManager: false
+
+    ## Ingress Path type
+    pathType: ImplementationSpecific
+
+    ## Override API Version (automatically detected if not set)
+    apiVersion: ""
+
+    ## When the ingress is enabled, a host pointing to this will be created
+    hostname: prometheus.local
+
+    ## The Path to Prometheus. You may need to set this to '/*' in order to use this
+    ## with ALB ingress controllers.
+    path: /
+
+    ## Ingress annotations done as key:value pairs
+    ## For a full list of possible ingress annotations, please see
+    ## ref: https://github.com/kubernetes/ingress-nginx/blob/master/docs/user-guide/nginx-configuration/annotations.md
+    ##
+    ## If tls is set to true, annotation ingress.kubernetes.io/secure-backends: "true" will automatically be set
+    ## If certManager is set to true, annotation kubernetes.io/tls-acme: "true" will automatically be set
+    ##
+    annotations: {}
+    #  kubernetes.io/ingress.class: nginx
+
+    ## Enable TLS configuration for the hostname defined at prometheus.ingress.hostname parameter
+    ## TLS certificates will be retrieved from a TLS secret with name: {{- printf "%s-tls" .Values.prometheus.ingress.hostname }}
+    ## You can use the prometheus.ingress.secrets parameter to create this TLS secret or relay on cert-manager to create it
+    tls: false
+
+    ## The list of additional hostnames to be covered with this ingress record.
+    ## Most likely the hostname above will be enough, but in the event more hosts are needed, this is an array
+    ## extraHosts:
+    ## - name: prometheus.local
+    ##   path: /
+    ##
+
+    ## Any additional arbitrary paths that may need to be added to the ingress under the main host.
+    ## For example: The ALB ingress controller requires a special rule for handling SSL redirection.
+    ## extraPaths:
+    ## - path: /*
+    ##   backend:
+    ##     serviceName: ssl-redirect
+    ##     servicePort: use-annotation
+    ##
+
+    ## The tls configuration for additional hostnames to be covered with this ingress record.
+    ## see: https://kubernetes.io/docs/concepts/services-networking/ingress/#tls
+    ## extraTls:
+    ## - hosts:
+    ##     - prometheus.local
+    ##   secretName: prometheus.local-tls
+    ##
+
+    ## If you're providing your own certificates, please use this to add the certificates as secrets
+    ## key and certificate should start with -----BEGIN CERTIFICATE----- or
+    ## -----BEGIN RSA PRIVATE KEY-----
+    ##
+    ## name should line up with a tlsSecret set further up
+    ## If you're using cert-manager, this is unneeded, as it will create the secret for you if it is not set
+    ##
+    ## It is also possible to create and manage the certificates outside of this helm chart
+    ## Please see README.md for more information
+    ##
+    secrets: []
+    ## - name: prometheus.local-tls
+    ##   key:
+    ##   certificate:
+    ##
+
+  ## If not creating an ingress but still exposing the service some other way (like a proxy)
+  ## let Prometheus know what its external URL is so that it can properly create links
+  # externalUrl: https://prometheus.example.com
+
+  resources: {}
+
+  podAntiAffinityPreset: hard
+
+  nodeAffinityPreset:
+    type: "hard"
+    key: "role"
+    values:
+    - operator
+
+  # affinity: {}
+  nodeSelector: {}
+  tolerations:
+  - key: operator
+    operator: Equal
+    value: 'true'
+    effect: NoSchedule
+
+  scrapeInterval: ""
+  evaluationInterval: ""
+  listenLocal: false
+  enableAdminAPI: false
+  # alertingEndpoints: []
+
+  externalLabels: {}
+  replicaExternalLabelName: ""
+
+  ## If true, the Operator won't add the external label used to denote replica name
+  replicaExternalLabelNameClear: false
+
+  ## Prefix used to register routes, overriding externalUrl route.
+  ## Useful for proxies that rewrite URLs.
+  routePrefix: /
+
+  ## Name of the external label used to denote Prometheus instance name
+  prometheusExternalLabelName: ""
+
+  ## If true, the Operator won't add the external label used to denote Prometheus instance name
+  prometheusExternalLabelNameClear: false
+
+  ## Secrets that should be mounted into the Prometheus Pods
+  # secrets: []
+
+  ## ConfigMaps that should be mounted into the Prometheus Pods
+  configMaps: []
+
+  ## The query command line flags when starting Prometheus
+  ## ref: https://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/api.md#queryspec
+  querySpec: {}
+
+  ## See https://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/api.md#namespaceselector for usage
+  ruleNamespaceSelector: {}
+
+  ## If {}, select all ServiceMonitors
+  ruleSelector: {}
+
+  ## If {}, select all ServiceMonitors
+  serviceMonitorSelector: {}
+  # matchLabels:
+  #   foo: bar
+
+  ## Namespaces to be selected for ServiceMonitor discovery.
+  serviceMonitorNamespaceSelector: {}
+
+  ## If {}, select all PodMonitors
+  podMonitorSelector: {}
+
+  ## Namespaces to be selected for PodMonitor discovery
+  podMonitorNamespaceSelector: {}
+
+  ## If {}, select all Probes
+  probeSelector: {}
+
+  ## See https://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/api.md#namespaceselector for usage
+  probeNamespaceSelector: {}
+
+  retention: 10d
+
+  ## Maximum size of metrics
+  retentionSize: ""
+
+  ## Disable the compaction of the Prometheus TSDB
+  ## See https://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/api.md#prometheusspec
+  ## ref: https://prometheus.io/docs/prometheus/latest/storage/#compaction
+  disableCompaction: true #
+
+  ## Enable compression of the write-ahead log using Snappy.
+  walCompression: false
+
+  ## If true, the Operator won't process any Prometheus configuration changes
+  paused: false
+
+  ## Desired number of Prometheus nodes
+  replicaCount: 1
+
+  logLevel: info
+  logFormat: logfmt
+
+  ## Standard object’s metadata
+  ## ref: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#metadata
+  ##
+  podMetadata:
+    labels: {}
+    # app: prometheus
+    # k8s-app: prometheus
+    annotations: {}
+
+  remoteRead: []
+  # - url: http://remote1/read
+  remoteWrite: []
+  # - url: http://remote1/push
+
+  ## Prometheus StorageSpec for persistent data
+  ## ref: https://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/user-guides/storage.md
+  storageSpec: {}
+
+  ## Prometheus persistence parameters
+  persistence:
+    enabled: ture
+    storageClass: gp3
+    accessModes:
+      - ReadWriteOnce
+    size: 8Gi
+
+  priorityClassName: "system-cluster-critical"
+
+  ## Containers allows injecting additional containers
+  containers: []
+
+  ## ref: https://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/api.md#prometheusspec
+  volumes: []
+  ## ref: https://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/api.md#prometheusspec
+  volumeMounts: []
+
+  ## PrometheusRule defines recording and alerting rules for a Prometheus instance.
+  additionalPrometheusRules: []
+  # - name: custom-recording-rules
+  #   groups:
+  #     - name: sum_node_by_job
+  #       rules:
+  #         - record: job:kube_node_labels:sum
+  #           expr: sum(kube_node_labels) by (job)
+  #     - name: sum_prometheus_config_reload_by_pod
+  #       rules:
+  #         - record: job:prometheus_config_last_reload_successful:sum
+  #           expr: sum(prometheus_config_last_reload_successful) by (pod)
+  # - name: custom-alerting-rules
+  #   groups:
+  #     - name: prometheus-config
+  #       rules:
+  #         - alert: PrometheusConfigurationReload
+  #           expr: prometheus_config_last_reload_successful > 0
+  #           for: 1m
+  #           labels:
+  #             severity: error
+  #           annotations:
+  #             summary: "Prometheus configuration reload (instance {{ $labels.instance }})"
+  #             description: "Prometheus configuration reload error\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}"
+  #     - name: custom-node-exporter-alerting-rules
+  #       rules:
+  #         - alert: PhysicalComponentTooHot
+  #           expr: node_hwmon_temp_celsius > 75
+  #           for: 5m
+  #           labels:
+  #             severity: warning
+  #           annotations:
+  #             summary: "Physical component too hot (instance {{ $labels.instance }})"
+  #             description: "Physical hardware component too hot\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}"
+  #         - alert: NodeOvertemperatureAlarm
+  #           expr: node_hwmon_temp_alarm == 1
+  #           for: 5m
+  #           labels:
+  #             severity: critical
+  #           annotations:
+  #             summary: "Node overtemperature alarm (instance {{ $labels.instance }})"
+  #             description: "Physical node temperature alarm triggered\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}"
+
+  additionalScrapeConfigs:
+    enabled: false
+    type: external
+    external:
+      name: ""
+      key: ""
+    internal:
+      jobList: []
+
+  ## NOTE additionalScrapeConfigsExternal is deprecated. Please see README.md
+  additionalScrapeConfigsExternal:
+    enabled: false
+    # name:
+    # key:
+
+  ## Enable additional Prometheus alert relabel configs that are managed externally to this chart
+  ## Note that the prometheus will fail to provision if the correct secret does not exist.
+  additionalAlertRelabelConfigsExternal:
+    enabled: false
+    # name:
+    # key:
+
+  ## Thanos sidecar container configuration
+  thanos:
+    create: THANOS_SIDECAR
+    image: {}
+      # registry: docker.io
+      # repository: bitnami/thanos
+      # tag: 0.18.0-scratch-r5
+      # pullPolicy: IfNotPresent
+      # # pullSecrets:
+      # #   - myRegistryKeySecretName
+    prometheusUrl: ""
+    extraArgs:
+    # - --log.level=debug
+    # - --tsdb.path=/data/
+
+    objectStorageConfig:
+      secretName: THANOS_SECRET_NAME
+      secretKey: objstore.yml
+
+    resources:
+      limits: {}
+      #   cpu: 100m
+      #   memory: 128Mi
+      requests: {}
+      #   cpu: 100m
+      #   memory: 128Mi
+
+    service:
+      type: ClusterIP
+      port: 10901
+      clusterIP: None
+      # nodePort: 30901
+      # loadBalancerIP:
+      # loadBalancerSourceRanges:
+      # - 10.10.10.0/24
+      annotations: {}
+
+      ## Extra ports to expose from the Thanos sidecar container
+      extraPorts: []
+      #   - name: http
+      #     port: 10902
+      #     targetPort: http
+      #     protocol: TCP
+
+    ## Configure the ingress resource that allows you to access the
+    ## Thanos Sidecar installation. Set up the URL
+    ingress:
+      enabled: false
+      certManager: false
+      annotations: {}
+      #  kubernetes.io/ingress.class: nginx
+      #  nginx.ingress.kubernetes.io/backend-protocol: "GRPCS"
+      hosts:
+        - name: thanos.prometheus.local
+          path: /
+
+      ## see: https://kubernetes.io/docs/concepts/services-networking/ingress/#tls
+      tls: {}
+      # - hosts:
+      #     - thanos.prometheus.local
+      #   secretName: thanos.prometheus.local-tls
+  # portName: web
+
+## Configuration for alertmanager
+alertmanager:
+  enabled: true
+
+  image: {}
+    # registry: docker.io
+    # repository: bitnami/alertmanager
+    # tag: 0.21.0-debian-10-r261
+    # # pullSecrets:
+    # #   - myRegistryKeySecretName
+
+  serviceAccount:
+    create: true
+    # name:
+
+  securityContext:
+    enabled: true
+    runAsUser: 1001
+    fsGroup: 1001
+
+  podDisruptionBudget:
+    enabled: false
+    minAvailable: 1
+    # maxUnavailable:
+
+  ## Alertmanager Service
+  service:
+    type: ClusterIP
+    port: 9093
+    # clusterIP: None
+
+    # nodePort: 30093
+
+    # loadBalancerIP:
+
+    # loadBalancerSourceRanges:
+    # - 10.10.10.0/24
+
+    externalTrafficPolicy: Cluster
+
+    # healthCheckNodePort:
+
+    # stickySessions: true
+
+    annotations: {}
+
+  ## If true, create a serviceMonitor for alertmanager
+  serviceMonitor:
+    enabled: true
+    interval: ""
+    metricRelabelings: []
+    relabelings: []
+
+  ## Configure the ingress resource that allows you to access the
+  ingress:
+    enabled: false
+    certManager: false
+    pathType: ImplementationSpecific
+    apiVersion:
+    hostname: alertmanager.local
+    path: /
+
+    ## If tls is set to true, annotation ingress.kubernetes.io/secure-backends: "true" will automatically be set
+    ## If certManager is set to true, annotation kubernetes.io/tls-acme: "true" will automatically be set
+    annotations: {}
+    #  kubernetes.io/ingress.class: nginx
+
+    ## Enable TLS configuration for the hostname defined at alertmanager.ingress.hostname parameter
+    ## TLS certificates will be retrieved from a TLS secret with name: {{- printf "%s-tls" .Values.alertmanager.ingress.hostname }}
+    ## You can use the alertmanager.ingress.secrets parameter to create this TLS secret or relay on cert-manager to create it
+    tls: false
+
+    ## The list of additional hostnames to be covered with this ingress record.
+    ## Most likely the hostname above will be enough, but in the event more hosts are needed, this is an array
+    ## extraHosts:
+    ## - name: alertmanager.local
+    ##   path: /
+    ##
+
+    ## Any additional arbitrary paths that may need to be added to the ingress under the main host.
+    ## For example: The ALB ingress controller requires a special rule for handling SSL redirection.
+    ## extraPaths:
+    ## - path: /*
+    ##   backend:
+    ##     serviceName: ssl-redirect
+    ##     servicePort: use-annotation
+    ##
+
+    ## The tls configuration for additional hostnames to be covered with this ingress record.
+    ## see: https://kubernetes.io/docs/concepts/services-networking/ingress/#tls
+    ## extraTls:
+    ## - hosts:
+    ##     - alertmanager.local
+    ##   secretName: alertmanager.local-tls
+    ##
+
+    secrets: []
+    ## - name: alertmanager.local-tls
+    ##   key:
+    ##   certificate:
+    ##
+
+  ## If not creating an ingress but still exposing the service some other way (like a proxy)
+  ## let Alertmanager know what its external URL is so that it can properly create links
+  # externalUrl: https://alertmanager.example.com
+
+  resources: {}
+
+  # podAffinityPreset: ""
+
+  podAntiAffinityPreset: soft
+
+  nodeAffinityPreset:
+    type: "soft"
+    key: "role"
+    values:
+    - operator
+
+  # affinity: {}
+  nodeSelector: {}
+  tolerations:
+  - key: operator
+    operator: Equal
+    value: 'true'
+    effect: NoSchedule
+
+  # config:
+  #   global:
+  #     resolve_timeout: 5m
+  #   route:
+  #     group_by: ['job']
+  #     group_wait: 30s
+  #     group_interval: 5m
+  #     repeat_interval: 12h
+  #     receiver: 'null'
+  #     routes:
+  #       - match:
+  #           alertname: Watchdog
+  #         receiver: 'null'
+  #   receivers:
+  #     - name: 'null'
+
+  ## Alertmanager configuration is created externally
+  ## If true, `alertmanager.config` is ignored, and a secret will not be created.
+  ##
+  ## Alertmanager requires a secret named `alertmanager-{{ template "kube-prometheus.alertmanager.fullname" . }}`
+  ## It must contain:
+  ##     alertmanager.yaml: <config>
+  ## ref: https://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/user-guides/alerting.md#alerting
+  ##
+  externalConfig: false
+
+  replicaCount: 1
+  logLevel: info
+  logFormat: logfmt
+
+  podMetadata:
+    labels: {}
+    annotations: {}
+
+  secrets: []
+  configMaps: []
+  retention: 120h
+  storageSpec: {}
+
+  persistence:
+    enabled: false
+    storageClass: gp3
+    accessModes:
+      - ReadWriteOnce
+    size: 8Gi
+
+  paused: false
+
+  ## ListenLocal makes the Alertmanager server listen on loopbac
+  listenLocal: false
+
+  ## Containers allows injecting additional containers
+  containers: []
+
+  volumes: []
+
+  volumeMounts: []
+
+  priorityClassName: "system-cluster-critical"
+
+  ## AdditionalPeers allows injecting a set of additional Alertmanagers to peer with to form a highly available cluster.
+  additionalPeers: []
+
+  routePrefix: /
+
+  ## Port name used for the pods and governing service. This defaults to web
+  portName: web
+
+## Exporters
+exporters:
+  node-exporter:
+    enabled: true
+
+  kube-state-metrics:
+    enabled: true
+
+## Node Exporter deployment configuration
+node-exporter:
+  service:
+    labels:
+      jobLabel: node-exporter
+
+  serviceMonitor:
+    enabled: true
+    jobLabel: jobLabel
+
+  extraArgs:
+    collector.filesystem.ignored-mount-points: "^/(dev|proc|sys|var/lib/docker/.+)($|/)"
+    collector.filesystem.ignored-fs-types: "^(autofs|binfmt_misc|cgroup|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|mqueue|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|sysfs|tracefs)$"
+
+kube-state-metrics:
+  serviceMonitor:
+    enabled: true
+
+## Component scraping the kube-apiserver
+kubeApiServer:
+  enabled: true
+
+  serviceMonitor:
+    interval: ""
+    metricRelabelings: []
+    relabelings: []
+
+## Component scraping the kube-controller-manager
+kubeControllerManager:
+  enabled: true
+  endpoints: []
+  namespace: kube-system
+
+  service:
+    enabled: true
+    port: 10252
+    targetPort: 10252
+    # selector:
+    #   component: kube-controller-manager
+
+  serviceMonitor:
+    interval: ""
+    ## Enable scraping kube-controller-manager over https.
+    https: false
+    # Skip TLS certificate validation when scraping
+    insecureSkipVerify: null
+    # Name of the server to use when validating TLS certificate
+    serverName: null
+    metricRelabelings: []
+    relabelings: []
+
+## Component scraping kube scheduler
+kubeScheduler:
+  enabled: true
+  endpoints: []
+  namespace: kube-system
+
+  service:
+    enabled: true
+    port: 10251
+    targetPort: 10251
+    # selector:
+    #   component: kube-scheduler
+
+  serviceMonitor:
+    interval: ""
+
+    ## Enable scraping kube-scheduler over https.
+    https: false
+
+    ## Skip TLS certificate validation when scraping
+    insecureSkipVerify: null
+
+    ## Name of the server to use when validating TLS certificate
+    serverName: null
+
+    metricRelabelings: []
+    # - action: keep
+    #   regex: 'kube_(daemonset|deployment|pod|namespace|node|statefulset).+'
+    #   sourceLabels: [__name__]
+
+    #   relabel configs to apply to samples before ingestion.
+    relabelings: []
+    # - sourceLabels: [__meta_kubernetes_pod_node_name]
+    #   separator: ;
+    #   regex: ^(.*)$
+    #   targetLabel: nodename
+    #   replacement: $1
+    #   action: replace
+
+## Component scraping coreDns
+coreDns:
+  enabled: true
+  namespace: kube-system
+  service:
+    enabled: true
+    port: 9153
+    targetPort: 9153
+    selector:
+      k8s-app: kube-dns
+
+  serviceMonitor:
+    interval: ""
+
+    metricRelabelings: []
+    # - action: keep
+    #   regex: 'kube_(daemonset|deployment|pod|namespace|node|statefulset).+'
+    #   sourceLabels: [__name__]
+
+    #   relabel configs to apply to samples before ingestion.
+    relabelings: []
+    # - sourceLabels: [__meta_kubernetes_pod_node_name]
+    #   separator: ;
+    #   regex: ^(.*)$
+    #   targetLabel: nodename
+    #   replacement: $1
+    #   action: replace
+
+## Component scraping the kube-proxy
+kubeProxy:
+  enabled: true
+  endpoints: []
+  # - 10.141.4.22
+  # - 10.141.4.23
+  # - 10.141.4.24
+
+  namespace: kube-system
+  service:
+    enabled: true
+    port: 10249
+    targetPort: 10249
+    selector:
+      k8s-app: kube-proxy
+
+  serviceMonitor:
+    ## Enable scraping kube-proxy over https.
+    https: false
+
+    interval: ""
+
+    ## Metric relabeling
+    metricRelabelings: []
+
+    ## Relabel configs
+    relabelings: []
+
+# Component scraping for kubelet and kubelet hosted cAdvisor
+kubelet:
+  enabled: true
+  namespace: kube-system
+
+  serviceMonitor:
+    https: true
+    interval: ""
+
+    ## Metric relabeling
+    metricRelabelings: []
+
+    ## Relabel configs
+    relabelings: []
+
+    ## Metric relabeling for scraping cAdvisor
+    cAdvisorMetricRelabelings: []
+
+    ## Relabel configs for scraping cAdvisor
+    cAdvisorRelabelings: []
