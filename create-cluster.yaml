@@ -11,7 +11,7 @@ metadata:
 vpc:
   cidr: "192.168.0.0/16"
   autoAllocateIPv6: false
-  publicAccessCIDRs: ["211.60.50.130/32"]
+  publicAccessCIDRs: ["211.60.50.130/32","61.79.201.235/32"]
   clusterEndpoints:
     publicAccess: true
     privateAccess: true
