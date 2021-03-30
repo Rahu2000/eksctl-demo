@@ -12,9 +12,11 @@
 ##############################################################
 #!/bin/bash
 
+set -x
+
 export CLUSTER_NAME="eksworkshop"
 export IAM_POLICY_NAME="AmazonEKS_Prometheus_Thanos_Policy"
-export IAM_ROLE_NAME="AmazonEFS_Prometheus_Thanos_Role"
+export IAM_ROLE_NAME="AmazonEKS_Prometheus_Thanos_Role"
 export SERVICE_ACCOUNT="kube-prometheus.prometheus"
 export NAMESPACE="monitoring"
 export CHART_VERSION="4.2.1"
@@ -61,7 +63,7 @@ kubectl create ns $NAMESPACE
 if [[ "true" == $THANOS_SIDECAR ]]; then
   kubectl create secret generic $SECRET_NAME \
   --from-file=objstore.yml=./templates/thanos-config.yaml \
-  --namespcae $NAMESPACE
+  --namespace $NAMESPACE
 fi
 
 ##############################################################
@@ -75,14 +77,14 @@ helm repo update
 
 if [ "Darwin" == "$LOCAL_OS_KERNEL" ]; then
   sed -i.bak "s|SERVICE_ACCOUNT|${SERVICE_ACCOUNT}|g" ./templates/prometheus.values.yaml
-  IAM_ROLE_ARN=$(echo ${IAM_ROLE_ARN} | sed 's|\/|\\/|')
   sed -i '' "s|IAM_ROLE_ARN|${IAM_ROLE_ARN}|g" ./templates/prometheus.values.yaml
   sed -i '' "s|THANOS_SIDECAR|${THANOS_SIDECAR}|g" ./templates/prometheus.values.yaml
   sed -i '' "s|THANOS_SECRET_NAME|${THANOS_SECRET_NAME}|g" ./templates/prometheus.values.yaml
 else
+
   sed -i.bak "s/SERVICE_ACCOUNT/${SERVICE_ACCOUNT}/g" ./templates/prometheus.values.yaml
   IAM_ROLE_ARN=$(echo ${IAM_ROLE_ARN} | sed 's|\/|\\/|')
-  sed -i "s/IAM_ROLE_ARN|${IAM_ROLE_ARN}/g" ./templates/prometheus.values.yaml
+  sed -i "s/IAM_ROLE_ARN/${IAM_ROLE_ARN}/g" ./templates/prometheus.values.yaml
   sed -i "s/THANOS_SIDECAR/${THANOS_SIDECAR}/g" ./templates/prometheus.values.yaml
   sed -i "s/THANOS_SECRET_NAME/${THANOS_SECRET_NAME}/g" ./templates/prometheus.values.yaml
 fi
