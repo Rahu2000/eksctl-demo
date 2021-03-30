@@ -61,7 +61,7 @@ fi
 kubectl create ns $NAMESPACE
 
 if [[ "true" == $THANOS_SIDECAR ]]; then
-  kubectl create secret generic $SECRET_NAME \
+  kubectl create secret generic "$THANOS_SECRET_NAME" \
   --from-file=objstore.yml=./templates/thanos-config.yaml \
   --namespace $NAMESPACE
 fi
