@@ -61,6 +61,14 @@ fi
 kubectl create ns $NAMESPACE
 
 if [[ "true" == $THANOS_SIDECAR ]]; then
+  if [ "Darwin" == "$LOCAL_OS_KERNEL" ]; then
+    sed -i.bak "s|BUCKET_NAME|${BUCKET_NAME}|g" ./templates/thanos-config.yaml
+    sed -i '' "s|REGION|${REGION}|g" ./templates/thanos-config.yaml
+  else
+    sed -i.bak "s/BUCKET_NAME/${BUCKET_NAME}/g" ./templates/thanos-config.yaml
+    sed -i "s/REGION/${REGION}/g" ./templates/thanos-config.yaml
+  fi
+
   kubectl create secret generic "$THANOS_SECRET_NAME" \
   --from-file=objstore.yml=./templates/thanos-config.yaml \
   --namespace $NAMESPACE
@@ -81,7 +89,6 @@ if [ "Darwin" == "$LOCAL_OS_KERNEL" ]; then
   sed -i '' "s|THANOS_SIDECAR|${THANOS_SIDECAR}|g" ./templates/prometheus.values.yaml
   sed -i '' "s|THANOS_SECRET_NAME|${THANOS_SECRET_NAME}|g" ./templates/prometheus.values.yaml
 else
-
   sed -i.bak "s/SERVICE_ACCOUNT/${SERVICE_ACCOUNT}/g" ./templates/prometheus.values.yaml
   IAM_ROLE_ARN=$(echo ${IAM_ROLE_ARN} | sed 's|\/|\\/|')
   sed -i "s/IAM_ROLE_ARN/${IAM_ROLE_ARN}/g" ./templates/prometheus.values.yaml
