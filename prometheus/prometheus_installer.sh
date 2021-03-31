@@ -31,6 +31,19 @@ IAM_ROLE_ARN=""
 IAM_POLICY_ARN=""
 
 ##############################################################
+# Remove old CRDs
+##############################################################
+kubectl delete --ignore-not-found customresourcedefinitions\
+  alertmanagerconfigs.monitoring.coreos.com\
+  alertmanagers.monitoring.coreos.com\
+  podmonitors.monitoring.coreos.com\
+  probes.monitoring.coreos.com\
+  prometheuses.monitoring.coreos.com\
+  prometheusrules.monitoring.coreos.com\
+  servicemonitors.monitoring.coreos.com\
+  thanosrulers.monitoring.coreos.com
+
+##############################################################
 # Create IAM Role and ServiceAccount
 ##############################################################
 LOCAL_OS_KERNEL="$(uname -a | awk -F ' ' ' {print $1} ')"
