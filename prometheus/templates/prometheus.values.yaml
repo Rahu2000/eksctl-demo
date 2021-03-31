@@ -381,8 +381,8 @@ prometheus:
 
   ## Prometheus StorageSpec for persistent data
   ## ref: https://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/user-guides/storage.md
-  storageSpec: {}
-
+  storageSpec:
+    disableMountSubPath: true
   ## Prometheus persistence parameters
   persistence:
     enabled: ture
