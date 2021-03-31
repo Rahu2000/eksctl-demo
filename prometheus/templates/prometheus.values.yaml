@@ -385,7 +385,7 @@ prometheus:
     disableMountSubPath: true
   ## Prometheus persistence parameters
   persistence:
-    enabled: ture
+    enabled: true
     storageClass: gp3
     accessModes:
       - ReadWriteOnce
