@@ -383,13 +383,21 @@ prometheus:
   ## ref: https://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/user-guides/storage.md
   storageSpec:
     disableMountSubPath: true
+    volumeClaimTemplate:
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 8Gi
+        storageClassName: gp3
   ## Prometheus persistence parameters
-  persistence:
-    enabled: true
-    storageClass: gp3
-    accessModes:
-      - ReadWriteOnce
-    size: 8Gi
+  # persistence:
+  #   enabled: true
+  #   storageClass: gp3
+  #   accessModes:
+  #     - ReadWriteOnce
+  #   size: 8Gi
 
   priorityClassName: "system-cluster-critical"
 
@@ -478,8 +486,7 @@ prometheus:
       # #   - myRegistryKeySecretName
     prometheusUrl: ""
     extraArgs:
-    # - --log.level=debug
-    # - --tsdb.path=/data/
+      - --log.level=debug
 
     objectStorageConfig:
       secretName: THANOS_SECRET_NAME
