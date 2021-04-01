@@ -35,6 +35,10 @@ IAM_POLICY_ARN=""
 # Delete release
 ##############################################################
 if [ "delete" == "$1" ]; then
+  helm delete ${RELEASE_NAME} --namespace ${NAMESPACE}
+
+  kubectl delete ns ${NAMESPACE}
+
   kubectl delete --ignore-not-found customresourcedefinitions\
     alertmanagerconfigs.monitoring.coreos.com\
     alertmanagers.monitoring.coreos.com\
@@ -44,10 +48,7 @@ if [ "delete" == "$1" ]; then
     prometheusrules.monitoring.coreos.com\
     servicemonitors.monitoring.coreos.com\
     thanosrulers.monitoring.coreos.com
-
-    helm delete ${RELEASE_NAME} --namespace ${NAMESPACE}
-    kubectl delete ns ${NAMESPACE}
-    exit 0
+  exit 0
 fi
 
 ##############################################################
