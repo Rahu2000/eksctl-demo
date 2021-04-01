@@ -24,6 +24,7 @@ export REGION="ap-northeast-2"
 export THANOS_SIDECAR="true" # [true|false]
 export BUCKET_NAME="s3-prometheus-thanos"
 export THANOS_SECRET_NAME="thanos-objstore-config"
+export RELEASE_NAME="prometheus"
 
 source ../common/utils.sh
 
@@ -31,17 +32,23 @@ IAM_ROLE_ARN=""
 IAM_POLICY_ARN=""
 
 ##############################################################
-# Remove old CRDs
+# Delete release
 ##############################################################
-kubectl delete --ignore-not-found customresourcedefinitions\
-  alertmanagerconfigs.monitoring.coreos.com\
-  alertmanagers.monitoring.coreos.com\
-  podmonitors.monitoring.coreos.com\
-  probes.monitoring.coreos.com\
-  prometheuses.monitoring.coreos.com\
-  prometheusrules.monitoring.coreos.com\
-  servicemonitors.monitoring.coreos.com\
-  thanosrulers.monitoring.coreos.com
+if [ "delete" == "$1" ]; then
+  kubectl delete --ignore-not-found customresourcedefinitions\
+    alertmanagerconfigs.monitoring.coreos.com\
+    alertmanagers.monitoring.coreos.com\
+    podmonitors.monitoring.coreos.com\
+    probes.monitoring.coreos.com\
+    prometheuses.monitoring.coreos.com\
+    prometheusrules.monitoring.coreos.com\
+    servicemonitors.monitoring.coreos.com\
+    thanosrulers.monitoring.coreos.com
+
+    helm delete ${RELEASE_NAME} --namespace ${NAMESPACE}
+    kubectl delete ns ${NAMESPACE}
+    exit 0
+fi
 
 ##############################################################
 # Create IAM Role and ServiceAccount
@@ -109,9 +116,19 @@ else
   sed -i "s/THANOS_SECRET_NAME/${THANOS_SECRET_NAME}/g" ./templates/prometheus.values.yaml
 fi
 
-helm upgrade --install prometheus \
+helm upgrade --install ${RELEASE_NAME} \
   bitnami/kube-prometheus \
   --version=${CHART_VERSION} \
   --namespace ${NAMESPACE} \
   -f ./templates/prometheus.values.yaml \
   --wait
+
+if [[ "true" == $THANOS_SIDECAR ]]; then
+  # Check thanos-sidecar 'WAL dir is not accessible' error
+  ERR=$(kubectl logs --namespace ${NAMESPACE} statefulset/${RELEASE_NAME}-prometheus-kube-prometheus-prometheus -c thanos-sidecar 2>/dev/null | grep 'WAL dir is not accessible')
+
+  if [[ -n "$ERR" ]]; then
+    kubectl rollout restart --namespace ${NAMESPACE} \
+      statefulset/${RELEASE_NAME}-prometheus-kube-prometheus-prometheus
+  fi
+fi
