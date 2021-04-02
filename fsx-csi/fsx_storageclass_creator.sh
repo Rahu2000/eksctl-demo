@@ -32,7 +32,7 @@ if [ "Darwin" == "$LOCAL_OS_KERNEL" ]; then
   sed -i '' "s|S3_BUCKET_NAME|${S3_BUCKET_NAME}|g" ./templates/fsx-storageclass.yaml
   sed -i '' "s|SCRACH_TYPE|${SCRACH_TYPE}|g" ./templates/fsx-storageclass.yaml
 else
-  sed -i.bak "s|FSX_SC_NAME|${FSX_SC_NAME}|g" ./templates/fsx-storageclass.yaml
+  sed -i.bak "s/FSX_SC_NAME/${FSX_SC_NAME}/g" ./templates/fsx-storageclass.yaml
   sed -i "s/SUBNET_ID/${SUBNET_ID}/g" ./templates/fsx-storageclass.yaml
   sed -i "s/SECURITY_GROUP_ID/${SECURITY_GROUP_ID}/g" ./templates/fsx-storageclass.yaml
   sed -i "s/S3_BUCKET_NAME/${S3_BUCKET_NAME}/g" ./templates/fsx-storageclass.yaml
