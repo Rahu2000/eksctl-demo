@@ -35,9 +35,9 @@ if [ "delete" == "$1" ]; then
   kubectl delete ns ${NAMESPACE}
 
   kubectl delete --ignore-not-found customresourcedefinitions\
-    prometheusrules.monitoring.coreos.com\
-    servicemonitors.monitoring.coreos.com\
-    thanosrulers.monitoring.coreos.com
+    grafanadashboards.integreatly.org\
+    grafanadatasources.integreatly.org\
+    grafanas.integreatly.org
   exit 0
 fi
 
@@ -48,7 +48,7 @@ LOCAL_OS_KERNEL="$(uname -a | awk -F ' ' ' {print $1} ')"
 if [ 'true' == "$CLOUDWATCH_ENABLED" ]; then
 
   NODEGROUP_ROLE_ARN=""
-  ROLES=$(aws iam list-roles | grep 'AmazonEKS' | grep Arn | awk -F ' ' ' {print $2} ')
+  ROLES=$(aws iam list-roles | grep "$CLUSTER_NAME-nodegroup" | grep Arn | awk -F ' ' ' {print $2} ')
   STR=$(arrayToString "$ROLES")
 
   if [ -n "$STR" ]; then
@@ -108,5 +108,6 @@ helm upgrade --install ${RELEASE_NAME} \
   bitnami/grafana-operator \
   --version=${CHART_VERSION} \
   --namespace ${NAMESPACE} \
+  --create-namespace \
   -f ./templates/grafana.values.yaml \
   --wait
