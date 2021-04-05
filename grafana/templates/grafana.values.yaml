@@ -3,62 +3,21 @@
 #   imagePullSecrets:
 #     - myRegistryKeySecretName
 
-# nameOverride:
-# fullnameOverride:
-
-## Extra objects to deploy (value evaluated as a template)
 extraDeploy: []
-
-## Add labels to all the deployed resources
 commonLabels: {}
-
-## Add annotations to all the deployed resources
 commonAnnotations: {}
 
-## This all configuration for the Grafana Operator.
-## Ref: https://github.com/integr8ly/grafana-operator/blob/master/documentation/README.md
-## Constants it is using for creating instances:
-## Ref: https://github.com/integr8ly/grafana-operator/blob/master/pkg/controller/model/constants.go
-##
 operator:
   enabled: true
-  ## Number of grafana-operator Pod replicas
+
   replicaCount: 1
 
-  ## Set up update strategy for Grafana installation. Set to Recreate if you use persistent volume that cannot be mounted by more than one pods to makesure the pods is destroyed first.
-  ## Ref: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy
-  ## Example:
-  ## updateStrategy:
-  ##  type: RollingUpdate
-  ##  rollingUpdate:
-  ##    maxSurge: 25%
-  ##    maxUnavailable: 25%
   updateStrategy:
     type: Recreate
 
-  # image:
-  #   registry: docker.io
-  #   repository: bitnami/grafana-operator
-  #   tag: 3.9.0-debian-10-r43
-  #   ## Specify a imagePullPolicy
-  #   ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
-  #   ## Ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
-  #   ##
-  #   pullPolicy: IfNotPresent
-  #   ## Optionally specify an array of imagePullSecrets.
-  #   ## Secrets must be manually created in the namespace.
-  #   ## Ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
-  #   ##
-  #   # pullSecrets:
-  #   #   - myRegistryKeySecretName
-
   args:
-    ## If one of these options is set a clusterRole and clusterRoleBinding is created to
-    ## ensure that the operator is able to get data from other namespaces.
     scanAllNamespaces: false
-    scanNamespaces:
-      - monitoring
-      - grafana
+    scanNamespaces: [BIND_NAMESPACE]
 
   rbac:
     create: true
@@ -73,7 +32,6 @@ operator:
     runAsGroup: 1001
     runAsNonRoot: true
     fsGroup: 1001
-    # supplementalGroups: []
 
   resources:
     limits: {}
@@ -82,8 +40,6 @@ operator:
       memory: 128Mi
 
   hostAliases: []
-
-  # podAffinityPreset: ''
   podAntiAffinityPreset: soft
 
   nodeAffinityPreset:
@@ -94,49 +50,21 @@ operator:
 
   podAnnotations: {}
   podLabels: {}
-  # nodeSelector: {}
   tolerations:
     - key: operator
       operator: Equal
       value: "true"
       effect: NoSchedule
-  # affinity: {}
 
   prometheus:
     serviceMonitor:
-      # enable support for Prometheus Operator
       enabled: true
-      # Job label for scrape target
       jobLabel: app.kubernetes.io/name
-      # Scrape interval. If not set, the Prometheus default scrape interval is used.
-      interval: ""
       metricRelabelings: []
       relabelings: []
 
-  # livenessProbe:
-  #   enabled: true
-  #   failureThreshold: 3
-  #   initialDelaySeconds: 10
-  #   periodSeconds: 10
-  #   successThreshold: 1
-  #   timeoutSeconds: 1
-
-  # readinessProbe:
-  #   enabled: true
-  #   failureThreshold: 3
-  #   initialDelaySeconds: 10
-  #   periodSeconds: 10
-  #   successThreshold: 1
-  #   timeoutSeconds: 1
-
 grafana:
   enabled: true
-  # image:
-  #   registry: docker.io
-  #   repository: bitnami/grafana
-  #   tag: 7.5.1-debian-10-r2
-  #   # pullSecrets:
-  #   #   - myRegistryKeySecretName
 
   podSecurityContext:
     enabled: true
@@ -168,25 +96,11 @@ grafana:
     values:
       - operator
 
-  # affinity: {}
-  # nodeSelector: {}
-
   tolerations:
     - key: operator
       operator: Equal
       value: "true"
       effect: NoSchedule
-
-  ## This loads extra configmaps and secrets into the created deployment.
-  ## Ref: https://github.com/integr8ly/grafana-operator/blob/master/documentation/deploy_grafana.md#configuring-the-deployment
-  ##
-  # envFrom:
-  ## Examples for a configmap or secret
-  ##
-  # - configMapRef:
-  #   name: grafana-configmap
-  # - secretRef:
-  #   name: grafana-secrets
 
   ## The grafana-operator client-configuration for this grafana instance
   ## Ref: https://github.com/integr8ly/grafana-operator/blob/master/documentation/deploy_grafana.md#configuring-grafana-api-access
@@ -199,31 +113,18 @@ grafana:
   ## Grafana web. Set up the URL
   ## Ref: http://kubernetes.io/docs/user-guide/ingress/
   ## Ref: https://github.com/integr8ly/grafana-operator/blob/master/documentation/deploy_grafana.md#configuring-the-ingress-or-route
-  ##
   ingress:
     enabled: false
     hostname: grafana.local
     path: /
 
-    ## Labels to add to the ingress object
-    ##
     # labels: {}
-
-    ## Ingress annotations done as key:value pairs
-    ## For a full list of possible ingress annotations, please see
-    ## Ref: https://github.com/kubernetes/ingress-nginx/blob/master/docs/user-guide/nginx-configuration/annotations.md
-    ##
-    ## If tls is set to true, annotation ingress.kubernetes.io/secure-backends: "true" will automatically be set
-    ## If certManager is set to true, annotation kubernetes.io/tls-acme: "true" will automatically be set
     # annotations:
     #   kubernetes.io/ingress.class: nginx
 
-    ## Set this to true in order to enable TLS on the ingress record
-    ##
     tls: false
 
     ## If TLS is set to true, you must declare what secret will store the key/certificate for TLS
-    ##
     tlsSecret: grafana.local-tls
 
   persistence:
@@ -235,7 +136,6 @@ grafana:
   ## This is the configuration from the grafana pod itself.
   ## every toml section is a root key
   ## Ref: https://grafana.com/docs/grafana/latest/administration/configuration/
-  ##
   config:
     server:
       root_url: |-
@@ -280,13 +180,10 @@ grafana:
 
   ## Mount extra configmaps and secrets into the Grafana pod
   ## Ref: https://github.com/integr8ly/grafana-operator/blob/master/documentation/extra_files.md
-  ##
   configMaps: []
   #  - myCustomConfigMap
-  #
   secrets: []
   #  - myCustomSecret
-  #
 
   jsonnetLibrarySelector:
     matchLabels:
@@ -296,25 +193,5 @@ grafana:
     - matchLabels:
         app.kubernetes.io/instance: '{{ .Release.Name }}'
 
-  # livenessProbe:
-  #   enabled: true
-  #   initialDelaySeconds: 120
-  #   periodSeconds: 10
-  #   timeoutSeconds: 5
-  #   failureThreshold: 6
-  #   successThreshold: 1
-  # readinessProbe:
-  #   enabled: true
-  #   initialDelaySeconds: 30
-  #   periodSeconds: 10
-  #   timeoutSeconds: 5
-  #   failureThreshold: 6
-  #   successThreshold: 1
-
 grafanaPluginInit:
   image: {}
-    # registry: docker.io
-    # repository: bitnami/grafana
-    # tag: 7.5.1-debian-10-r2
-    # # # pullSecrets:
-    # # #   - myRegistryKeySecretName

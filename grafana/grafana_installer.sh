@@ -23,6 +23,7 @@ export CHART_VERSION="0.6.4"
 export REGION="ap-northeast-2"
 export RELEASE_NAME="grafana"
 export CLOUDWATCH_ENABLED="true" # [true|false]
+export PROMETHEUS_NAMESPACE="prometheus"
 
 source ../common/utils.sh
 
@@ -103,6 +104,12 @@ if [ -z "$(helm repo list | grep https://charts.bitnami.com/bitnami)" ]; then
   helm repo add bitnami https://charts.bitnami.com/bitnami
 fi
 helm repo update
+
+if [ "Darwin" == "$LOCAL_OS_KERNEL" ]; then
+  sed -i.bak "s|BIND_NAMESPACE|${PROMETHEUS_NAMESPACE},${NAMESPACE}|g" ./templates/grafana.values.yaml
+else
+  sed -i.bak "s/BIND_NAMESPACE/${PROMETHEUS_NAMESPACE},${NAMESPACE}/g" ./templates/grafana.values.yaml
+fi
 
 helm upgrade --install ${RELEASE_NAME} \
   bitnami/grafana-operator \
