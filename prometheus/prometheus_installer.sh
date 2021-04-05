@@ -96,9 +96,9 @@ if [[ "true" == $THANOS_SIDECAR ]]; then
 fi
 
 ##############################################################
-# Install AWS EBS CSI DRIVER with Helm
+# Install Prometheus Operator with Helm
 ##############################################################
-## Add the aws-ebs-csi-driver Helm repository
+## Add the Bitnami Helm repository
 if [ -z "$(helm repo list | grep https://charts.bitnami.com/bitnami)" ]; then
   helm repo add bitnami https://charts.bitnami.com/bitnami
 fi

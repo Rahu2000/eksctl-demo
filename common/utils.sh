@@ -66,3 +66,12 @@ EOF
 
   echo $ROLE_ARN
 }
+
+# Convert array to string
+function arrayToString {
+  STR=""
+  for N in "$@"
+    do STR=$STR$N
+  done
+  echo $STR
+}

@@ -1,30 +1,18 @@
-## Global Docker image parameters
-## Please, note that this will override the image parameters, including dependencies, configured to use the global value
-## Current available global Docker image parameters: imageRegistry, imagePullSecrets
-##
 # global:
 #   imageRegistry: myRegistryName
 #   imagePullSecrets:
 #     - myRegistryKeySecretName
 
-## String to partially override common.names.fullname include (will maintain the release name)
-##
 # nameOverride:
-
-## String to fully override common.names.fullname template
-##
 # fullnameOverride:
 
 ## Extra objects to deploy (value evaluated as a template)
-##
 extraDeploy: []
 
 ## Add labels to all the deployed resources
-##
 commonLabels: {}
 
 ## Add annotations to all the deployed resources
-##
 commonAnnotations: {}
 
 ## This all configuration for the Grafana Operator.
@@ -35,7 +23,6 @@ commonAnnotations: {}
 operator:
   enabled: true
   ## Number of grafana-operator Pod replicas
-  ##
   replicaCount: 1
 
   ## Set up update strategy for Grafana installation. Set to Recreate if you use persistent volume that cannot be mounted by more than one pods to makesure the pods is destroyed first.
@@ -46,47 +33,40 @@ operator:
   ##  rollingUpdate:
   ##    maxSurge: 25%
   ##    maxUnavailable: 25%
-  ##
   updateStrategy:
     type: Recreate
 
-  image:
-    registry: docker.io
-    repository: bitnami/grafana-operator
-    tag: 3.9.0-debian-10-r43
-    ## Specify a imagePullPolicy
-    ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
-    ## Ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
-    ##
-    pullPolicy: IfNotPresent
-    ## Optionally specify an array of imagePullSecrets.
-    ## Secrets must be manually created in the namespace.
-    ## Ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
-    ##
-    # pullSecrets:
-    #   - myRegistryKeySecretName
+  # image:
+  #   registry: docker.io
+  #   repository: bitnami/grafana-operator
+  #   tag: 3.9.0-debian-10-r43
+  #   ## Specify a imagePullPolicy
+  #   ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
+  #   ## Ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+  #   ##
+  #   pullPolicy: IfNotPresent
+  #   ## Optionally specify an array of imagePullSecrets.
+  #   ## Secrets must be manually created in the namespace.
+  #   ## Ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+  #   ##
+  #   # pullSecrets:
+  #   #   - myRegistryKeySecretName
 
   args:
     ## If one of these options is set a clusterRole and clusterRoleBinding is created to
     ## ensure that the operator is able to get data from other namespaces.
-    ##
     scanAllNamespaces: false
-    scanNamespaces: []
+    scanNamespaces:
+      - monitoring
+      - grafana
 
   rbac:
-    # create specifies whether to install and use RBAC rules.
     create: true
 
   serviceAccount:
-    # Specifies whether a service account should be created
     create: true
-    # The name of the service account to use.
-    # If not set and create is true, a name is generated using the fullname template
     name:
 
-  ## Pod securityContext
-  ## Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-  ##
   podSecurityContext:
     enabled: true
     runAsUser: 1001
@@ -95,84 +75,37 @@ operator:
     fsGroup: 1001
     # supplementalGroups: []
 
-  ## We usually recommend not to specify default resources and to leave this as a conscious
-  ## choice for the user. This also increases chances charts run on environments with little
-  ## resources, such as Minikube. If you do want to specify resources, uncomment the following
-  ## lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  ## limits:
-  ##   cpu: 100m
-  ##   memory: 128Mi
-  ## requests:
-  ##   cpu: 100m
-  ##   memory: 128Mi
-  ##
-  resources: {}
+  resources:
+    limits: {}
+    requests:
+      cpu: 100m
+      memory: 128Mi
 
-  ## Deployment pod host aliases
-  ## https://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/
-  ##
   hostAliases: []
 
-  ## Pod affinity preset
-  ## Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
-  ## Allowed values: soft, hard
-  ##
-  podAffinityPreset: ''
-
-  ## Pod anti-affinity preset
-  ## Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
-  ## Allowed values: soft, hard
-  ##
+  # podAffinityPreset: ''
   podAntiAffinityPreset: soft
 
   nodeAffinityPreset:
-    ## Node affinity type
-    ## Allowed values: soft, hard
-    ##
-    type: ''
-    ## Node label key to match
-    ## E.g.
-    ## key: "kubernetes.io/e2e-az-name"
-    ##
-    key: ''
-    ## Node label values to match
-    ## E.g.
-    ## values:
-    ##   - e2e-az1
-    ##   - e2e-az2
-    ##
-    values: []
+    type: 'hard'
+    key: 'role'
+    values:
+      - operator
 
-  ## Pod annotations
-  ## Ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
-  ##
   podAnnotations: {}
-
-  ## Additional pod labels
-  ## Ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
-  ##
   podLabels: {}
-
-  ## Node labels for pod assignment
-  ## Ref: https://kubernetes.io/docs/user-guide/node-selection/
-  ##
-  nodeSelector: {}
-
-  ## Tolerations for pod assignment
-  ## Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
-  ##
-  tolerations: []
-
-  ## Affinity for pod assignment
-  ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
-  ##
-  affinity: {}
+  # nodeSelector: {}
+  tolerations:
+    - key: operator
+      operator: Equal
+      value: "true"
+      effect: NoSchedule
+  # affinity: {}
 
   prometheus:
-    # Prometheus Operator service monitors
     serviceMonitor:
       # enable support for Prometheus Operator
-      enabled: false
+      enabled: true
       # Job label for scrape target
       jobLabel: app.kubernetes.io/name
       # Scrape interval. If not set, the Prometheus default scrape interval is used.
@@ -180,41 +113,31 @@ operator:
       metricRelabelings: []
       relabelings: []
 
-  ## Liveness and readiness probe values
-  ## Ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-probes
-  ##
-  livenessProbe:
-    enabled: true
-    failureThreshold: 3
-    initialDelaySeconds: 10
-    periodSeconds: 10
-    successThreshold: 1
-    timeoutSeconds: 1
+  # livenessProbe:
+  #   enabled: true
+  #   failureThreshold: 3
+  #   initialDelaySeconds: 10
+  #   periodSeconds: 10
+  #   successThreshold: 1
+  #   timeoutSeconds: 1
 
-  readinessProbe:
-    enabled: true
-    failureThreshold: 3
-    initialDelaySeconds: 10
-    periodSeconds: 10
-    successThreshold: 1
-    timeoutSeconds: 1
+  # readinessProbe:
+  #   enabled: true
+  #   failureThreshold: 3
+  #   initialDelaySeconds: 10
+  #   periodSeconds: 10
+  #   successThreshold: 1
+  #   timeoutSeconds: 1
 
 grafana:
   enabled: true
-  image:
-    registry: docker.io
-    repository: bitnami/grafana
-    tag: 7.5.1-debian-10-r2
-    ## Optionally specify an array of imagePullSecrets.
-    ## Secrets must be manually created in the namespace.
-    ## Ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
-    ##
-    # pullSecrets:
-    #   - myRegistryKeySecretName
+  # image:
+  #   registry: docker.io
+  #   repository: bitnami/grafana
+  #   tag: 7.5.1-debian-10-r2
+  #   # pullSecrets:
+  #   #   - myRegistryKeySecretName
 
-  ## Pod securityContext
-  ## Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-  ##
   podSecurityContext:
     enabled: true
     runAsUser: 1001
@@ -223,9 +146,6 @@ grafana:
     fsGroup: 1001
     # supplementalGroups: []
 
-  ## Container securityContext
-  ## Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
-  ##
   containerSecurityContext:
     enabled: true
     runAsUser: 1001
@@ -233,76 +153,29 @@ grafana:
     fsGroup: 1001
     allowPrivilegeEscalation: false
 
-  ## Grafana containers' resource requests and limits
-  ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
-  ##
   resources:
-    # We usually recommend not to specify default resources and to leave this as a conscious
-    # choice for the user. This also increases chances charts run on environments with little
-    # resources, such as Minikube. If you do want to specify resources, uncomment the following
-    # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
     limits: {}
-    #   cpu: 500m
-    #   memory: 1Gi
-    requests: {}
-    #   cpu: 250m
-    #   memory: 256Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
 
-  ## The amount of pods scheduled by the created deployment
-  ## Ref: https://github.com/integr8ly/grafana-operator/blob/master/documentation/deploy_grafana.md#configuring-the-deployment
-  ## NOTE: Number of replicas. If more than one is selected, a shared database should be configured.
-  ##
   replicaCount: 1
-
-  ## Pod affinity preset
-  ## Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
-  ## Allowed values: soft, hard
-  ##
-  podAffinityPreset: ""
-
-  ## Pod anti-affinity preset
-  ## Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
-  ## Allowed values: soft, hard
-  ##
   podAntiAffinityPreset: soft
 
-  ## Node affinity preset
-  ## Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity
-  ## Allowed values: soft, hard
-  ##
   nodeAffinityPreset:
-    ## Node affinity type
-    ## Allowed values: soft, hard
-    ##
-    type: ""
-    ## Node label key to match
-    ## E.g.
-    ## key: "kubernetes.io/e2e-az-name"
-    ##
-    key: ""
-    ## Node label values to match
-    ## E.g.
-    ## values:
-    ##   - e2e-az1
-    ##   - e2e-az2
-    ##
-    values: []
+    type: "soft"
+    key: "role"
+    values:
+      - operator
 
-  ## Affinity for pod assignment
-  ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
-  ## Note: podAffinityPreset, podAntiAffinityPreset, and  nodeAffinityPreset will be ignored when it's set
-  ##
-  affinity: {}
+  # affinity: {}
+  # nodeSelector: {}
 
-  ## Node labels for pod assignment
-  ## Ref: https://kubernetes.io/docs/user-guide/node-selection/
-  ##
-  nodeSelector: {}
-
-  ## Tolerations for pod assignment
-  ## Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
-  ##
-  tolerations: []
+  tolerations:
+    - key: operator
+      operator: Equal
+      value: "true"
+      effect: NoSchedule
 
   ## This loads extra configmaps and secrets into the created deployment.
   ## Ref: https://github.com/integr8ly/grafana-operator/blob/master/documentation/deploy_grafana.md#configuring-the-deployment
@@ -353,20 +226,9 @@ grafana:
     ##
     tlsSecret: grafana.local-tls
 
-  ## Enable persistence using Persistent Volume Claims
-  ## Ref: http://kubernetes.io/docs/user-guide/persistent-volumes/
-  ##
-  ##
   persistence:
     enabled: true
-    ## Grafana data Persistent Volume Storage Class
-    ## If defined, storageClassName: <storageClass>
-    ## If set to "-", storageClassName: "", which disables dynamic provisioning
-    ## If undefined (the default) or set to null, no storageClassName spec is
-    ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
-    ##   GKE, AWS & OpenStack)
-    ##
-    # storageClass: "-"
+    storageClass: gp3
     accessMode: ReadWriteOnce
     size: 10Gi
 
@@ -426,47 +288,33 @@ grafana:
   #  - myCustomSecret
   #
 
-  ## Configuring the read for jsonnetLibraries to pull in.
-  ## Ref: https://github.com/integr8ly/grafana-operator/blob/master/documentation/deploy_grafana.md#jsonnet-library-discovery
-  ##
   jsonnetLibrarySelector:
     matchLabels:
       app.kubernetes.io/instance: '{{ .Release.Name }}'
 
-  ## This selects dashboards on the label.
-  ## A cachall is not possible so you need to define at least one label selector here.
-  ## Ref: https://github.com/integr8ly/grafana-operator/blob/master/documentation/deploy_grafana.md#deploying-grafana
-  ##
   dashboardLabelSelectors:
     - matchLabels:
         app.kubernetes.io/instance: '{{ .Release.Name }}'
 
-  ## Grafana containers' liveness and readiness probes
-  ## Ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-probes
-  ##
-  livenessProbe:
-    enabled: true
-    initialDelaySeconds: 120
-    periodSeconds: 10
-    timeoutSeconds: 5
-    failureThreshold: 6
-    successThreshold: 1
-  readinessProbe:
-    enabled: true
-    initialDelaySeconds: 30
-    periodSeconds: 10
-    timeoutSeconds: 5
-    failureThreshold: 6
-    successThreshold: 1
+  # livenessProbe:
+  #   enabled: true
+  #   initialDelaySeconds: 120
+  #   periodSeconds: 10
+  #   timeoutSeconds: 5
+  #   failureThreshold: 6
+  #   successThreshold: 1
+  # readinessProbe:
+  #   enabled: true
+  #   initialDelaySeconds: 30
+  #   periodSeconds: 10
+  #   timeoutSeconds: 5
+  #   failureThreshold: 6
+  #   successThreshold: 1
 
 grafanaPluginInit:
-  image:
-    registry: docker.io
-    repository: bitnami/grafana
-    tag: 7.5.1-debian-10-r2
-    ## Optionally specify an array of imagePullSecrets.
-    ## Secrets must be manually created in the namespace.
-    ## Ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
-    ##
-    # pullSecrets:
-    #   - myRegistryKeySecretName
+  image: {}
+    # registry: docker.io
+    # repository: bitnami/grafana
+    # tag: 7.5.1-debian-10-r2
+    # # # pullSecrets:
+    # # #   - myRegistryKeySecretName
