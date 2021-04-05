@@ -21,8 +21,25 @@ export SNAPSHOT_SERVICE_ACCOUNT="ebs-csi-snapshot"
 export NAMESPACE="kube-system"
 export CHART_VERSION="0.9.8"
 export REGION="ap-northeast-2"
+export RELEASE_NAME="aws-ebs-csi-driver"
 
 source ../common/utils.sh
+
+##############################################################
+# Delete release
+##############################################################
+if [ "delete" == "$1" ]; then
+  kubectl delete --ignore-not-found pdb/ebs-csi-controller-pdb --namespace ${NAMESPACE}
+  kubectl delete --ignore-not-found pdb/ebs-snapshot-controller-pdb --namespace ${NAMESPACE}
+
+  helm delete ${RELEASE_NAME} --namespace ${NAMESPACE}
+
+  kubectl delete --ignore-not-found customresourcedefinitions\
+    volumesnapshotclasses.snapshot.storage.k8s.io\
+    volumesnapshotcontents.snapshot.storage.k8s.io\
+    volumesnapshots.snapshot.storage.k8s.io
+  exit 0
+fi
 
 ##############################################################
 # Create IAM Role and ServiceAccount
@@ -89,7 +106,7 @@ if [[  "true" == $SNAPSHOT_ENABLE ]]; then
   fi
 fi
 
-helm upgrade --install aws-ebs-csi-driver \
+helm upgrade --install ${RELEASE_NAME} \
   aws-ebs-csi-driver/aws-ebs-csi-driver \
   --version=${CHART_VERSION} \
   --namespace ${NAMESPACE} \
