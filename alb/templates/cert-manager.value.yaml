@@ -26,13 +26,6 @@ replicaCount: 1
 # controller pod.
 featureGates: ""
 
-# image: {}
-  # repository: quay.io/jetstack/cert-manager-controller
-  # tag: CERT_MANGER_VERSION
-  # pullPolicy: IfNotPresent
-
-# clusterResourceNamespace: "cert-manager"
-
 serviceAccount:
   create: true
   # name: ""
@@ -150,11 +143,6 @@ webhook:
       value: "true"
       effect: NoSchedule
 
-  # image: {}
-  #   repository: quay.io/jetstack/cert-manager-webhook
-  #   tag: CERT_MANGER_VERSION
-  #   pullPolicy: IfNotPresent
-
   serviceAccount:
     create: true
     # name: ""
@@ -212,11 +200,6 @@ cainjector:
       operator: Equal
       value: "true"
       effect: NoSchedule
-
-  # image: {}
-    # repository: quay.io/jetstack/cert-manager-cainjector
-    # tag: CERT_MANGER_VERSION
-    # pullPolicy: IfNotPresent
 
   serviceAccount:
     create: true

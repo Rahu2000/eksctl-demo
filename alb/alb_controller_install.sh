@@ -36,7 +36,13 @@ if [ "delete" == "$1" ]; then
   kubectl delete --ignore-not-found pdb/aws-load-balancer-controller-pdb --namespace ${NAMESPACE}
   kubectl delete -f "${ALB_CONTROLLER_FILE}_full.yaml" --namespace ${NAMESPACE}
 
+  kubectl delete --ignore-not-found cm/aws-load-balancer-controller-leader --namespace ${NAMESPACE}
+
   helm delete ${CERT_RELEASE_NAME} --namespace ${CERT_NAMESPACE}
+
+  kubectl delete --ignore-not-found cm/cert-manager-cainjector-leader-election --namespace ${NAMESPACE}
+  kubectl delete --ignore-not-found cm/cert-manager-cainjector-leader-election-core --namespace ${NAMESPACE}
+  kubectl delete --ignore-not-found cm/cert-manager-controller --namespace ${NAMESPACE}
   kubectl delete ns ${CERT_NAMESPACE}
 
   kubectl delete --ignore-not-found customresourcedefinitions\
