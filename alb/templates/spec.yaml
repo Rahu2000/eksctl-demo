@@ -21,4 +21,4 @@ tolerations:
     operator: Equal
     value: 'true'
     effect: NoSchedule
-priorityClassName: operational-critical
+priorityClassName: system-cluster-critical
