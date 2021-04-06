@@ -24,8 +24,30 @@ export ALB_CONTROLLER_FILE="v2_1_3"
 export SERVICE_ACCOUNT="aws-load-balancer-controller"
 export NAMESPACE="kube-system"
 export REGION="ap-northeast-2"
+export CERT_NAMESPACE="cert-manager"
+export CERT_RELEASE_NAME="cert-manager"
 
 source ../common/utils.sh
+
+##############################################################
+# Delete release
+##############################################################
+if [ "delete" == "$1" ]; then
+  kubectl delete --ignore-not-found pdb/aws-load-balancer-controller-pdb --namespace ${NAMESPACE}
+  kubectl delete -f "${ALB_CONTROLLER_FILE}_full.yaml" --namespace ${NAMESPACE}
+
+  helm delete ${CERT_RELEASE_NAME} --namespace ${CERT_NAMESPACE}
+  kubectl delete ns ${CERT_NAMESPACE}
+
+  kubectl delete --ignore-not-found customresourcedefinitions\
+    certificaterequests.cert-manager.io\
+    certificates.cert-manager.io\
+    challenges.acme.cert-manager.io\
+    clusterissuers.cert-manager.io\
+    issuers.cert-manager.io\
+    orders.acme.cert-manager.io
+  exit 0
+fi
 
 LOCAL_OS_KERNEL="$(uname -a | awk -F ' ' ' {print $1} ')"
 ##############################################################
@@ -48,8 +70,8 @@ fi
 
 ## Install the cert-manager helm chart
 helm upgrade --install \
-  cert-manager jetstack/cert-manager \
-  --namespace cert-manager \
+  ${CERT_RELEASE_NAME} jetstack/cert-manager \
+  --namespace ${CERT_NAMESPACE} \
   --version "${CERT_MANGER_VERSION}" \
   --create-namespace \
   -f ./templates/cert-manager.value.yaml \
