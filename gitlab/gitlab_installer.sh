@@ -53,20 +53,22 @@ if [ "delete" == "$1" ]; then
   exit 0
 fi
 
-# ## Add the gitlab Helm repository
-# if [ -z "$(helm repo list | grep https://charts.gitlab.io)" ]; then
-#   helm repo add gitlab https://charts.gitlab.io
-# fi
-# helm repo update
+## Add the gitlab Helm repository
+if [ -z "$(helm repo list | grep https://charts.gitlab.io)" ]; then
+  helm repo add gitlab https://charts.gitlab.io
+fi
+helm repo update
 
-# helm upgrade --install ${RELEASE_NAME} gitlab/gitlab \
-#   --timeout 600s \
-#   --version=${CHART_VERSION} \
-#   --set global.hosts.domain=${DOMAIN} \
-#   --set certmanager-issuer.email=${ISSUER_EMAIL} \
-#   --set global.edition=ce \
-#   --create-namespace \
-#   -n ${NAMESPACE}
+helm upgrade --install ${RELEASE_NAME} gitlab/gitlab \
+  --timeout 600s \
+  --version=${CHART_VERSION} \
+  --set global.hosts.domain=${DOMAIN} \
+  --set certmanager-issuer.email=${ISSUER_EMAIL} \
+  --set global.edition=ce \
+  --create-namespace \
+  -n ${NAMESPACE}
+
+sleep 5
 
 GITLAB_DNS_NAME=""
 for i in {1..10}
