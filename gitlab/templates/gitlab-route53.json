@@ -4,7 +4,7 @@
     {
       "Action": "UPSERT",
       "ResourceRecordSet": {
-        "Name": "gitlab.DOMANE",
+        "Name": "gitlab.DOMAIN",
         "Type": "CNAME",
         "TTL": 300,
         "ResourceRecords": [
@@ -17,7 +17,7 @@
     {
       "Action": "UPSERT",
       "ResourceRecordSet": {
-        "Name": "minio.DOMANE",
+        "Name": "minio.DOMAIN",
         "Type": "CNAME",
         "TTL": 300,
         "ResourceRecords": [
@@ -30,7 +30,7 @@
     {
       "Action": "UPSERT",
       "ResourceRecordSet": {
-        "Name": "registry.DOMANE",
+        "Name": "registry.DOMAIN",
         "Type": "CNAME",
         "TTL": 300,
         "ResourceRecords": [
