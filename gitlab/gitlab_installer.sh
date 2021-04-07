@@ -1,0 +1,108 @@
+##############################################################
+# Gitlab INSTALLER
+#
+# Required tools
+# - helm v3+
+# - yq 2.12.0+
+# - jq 1.6+
+# - curl
+# - kubectl 1.16+
+# - gnu-sed
+#
+# Tested version
+#   EKS v1.19
+#   gitlab/gitlab 4.10.2
+##############################################################
+#!/bin/bash
+
+set -x
+
+export CLUSTER_NAME="eksworkshop"
+export IAM_POLICY_NAME="AmazonEKS_Load_Balancer_Controller_Policy"
+export IAM_ROLE_NAME="AmazonEKS_Load_Balancer_Controller_Role"
+export CHART_VERSION="4.10.2"
+export SERVICE_ACCOUNT="aws-load-balancer-controller"
+export NAMESPACE="gitlab"
+export RELEASE_NAME="gitlab"
+export DOMAIN="eksdemo.tk"
+export ISSUER_EMAIL="thkim@mz.co.kr"
+
+source ../common/utils.sh
+
+##############################################################
+# Delete release
+##############################################################
+if [ "delete" == "$1" ]; then
+  helm delete ${RELEASE_NAME} --namespace ${NAMESPACE}
+
+  for CM in $(kubectl get cm -n ${NAMESPACE} | awk -F ' ' '{print $1}');
+    do kubectl delete --ignore-not-found cm/${CM} -n ${NAMESPACE}
+  done
+
+  for SECRET in $(kubectl get secret -n ${NAMESPACE} | grep ${RELEASE_NAME} | awk -F ' ' '{print $1}');
+    do kubectl delete --ignore-not-found secret/${SECRET} -n ${NAMESPACE}
+  done
+
+  for PVC in $(kubectl get pvc -n ${NAMESPACE} | awk -F ' ' '{print $1}');
+    do kubectl delete --ignore-not-found pvc/${PVC} -n ${NAMESPACE}
+  done
+
+  kubectl delete ns ${NAMESPACE}
+
+  # kubectl delete --ignore-not-found customresourcedefinitions\
+  #   certificaterequests.certmanager.io\
+  #   certificates.certmanager.io\
+  #   challenges.certmanager.io\
+  #   clusterissuers.certmanager.io\
+  #   issuers.certmanager.io\
+  #   orders.certmanager.io
+  exit 0
+fi
+
+## Add the gitlab Helm repository
+if [ -z "$(helm repo list | grep https://charts.gitlab.io)" ]; then
+  helm repo add gitlab https://charts.gitlab.io
+fi
+helm repo update
+
+helm upgrade --install ${RELEASE_NAME} gitlab/gitlab \
+  --timeout 600s \
+  --version=${CHART_VERSION} \
+  --set global.hosts.domain=${DOMAIN} \
+  --set certmanager-issuer.email=${ISSUER_EMAIL} \
+  --set global.edition=ce \
+  --create-namespace \
+  -n ${NAMESPACE}
+
+GITLAB_DNS_NAME=""
+for i in {1..10}
+  do
+    GITLAB_DNS_NAME=$(kubectl get svc -n gitlab | grep amazonaws.com | awk -F ' ' '{print $4}')
+    if [ -n $GITLAB_DNS_NAME ]; then
+      break;
+    fi
+    sleep 1;
+done
+
+if [ -z $GITLAB_DNS_NAME ]; then
+  echo gitlab deployment failed.
+  exit 1
+fi
+
+LOCAL_OS_KERNEL="$(uname -a | awk -F ' ' ' {print $1} ')"
+
+if [ "Darwin" == "$LOCAL_OS_KERNEL" ]; then
+  sed -i.bak "s|DOMANE|${DOMANE}|g" ./templates/gitlab-route53.json
+  sed -i '' "s|DNS_NAME|${GITLAB_DNS_NAME}|g" ./templates/gitlab-route53.json
+else
+  sed -i.bak "s/DOMANE/${DOMANE}/g" ./templates/gitlab-route53.json
+  sed -i "s/DNS_NAME/${GITLAB_DNS_NAME}/g" ./templates/gitlab-route53.json
+fi
+
+HOSTED_ZONE_ID=$(aws route53 list-hosted-zones | jq -r --arg domain "$DOMAIN" '.HostedZones[] | select(.Name | startswith($domain)) | .Id' | awk -F '/' '{print $3}')
+
+if [ -n $HOSTED_ZONE_ID ]; then
+  aws route53 change-resource-record-sets \
+  --hosted-zone-id $HOSTED_ZONE_ID \
+  --change-batch file://./templates/gitlab-route53.json
+fi
