@@ -2,8 +2,6 @@
 # AWS FSX STORAGECLASS CREATOR
 #
 # Required tools
-# - helm v3+
-# - jq 1.6+
 # - kubectl 1.16+
 #
 # Tested version

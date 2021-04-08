@@ -4,6 +4,7 @@
 # Required tools
 # - helm v3+
 # - jq 1.6+
+# - yq
 # - kubectl 1.16+
 #
 # Tested version
