@@ -296,10 +296,28 @@ prometheus:
     # k8s-app: prometheus
     annotations: {}
 
+  ## Sidecar for Amazon Managed Promtheus
+  # containers:
+  #   - name: aws-sigv4-proxy-sidecar
+  #     image: public.ecr.aws/aws-observability/aws-sigv4-proxy:1.0
+  #     args:
+  #     - --name
+  #     - aps
+  #     - --region
+  #     - us-east-1
+  #     - --host
+  #     - aps-workspaces.us-east-1.amazonaws.com
+  #     - --port
+  #     - :8005
+  #     ports:
+  #       - name: aws-sigv4-proxy
+  #         containerPort: 8005
+
   remoteRead: []
   # - url: http://remote1/read
   remoteWrite: []
-  # - url: http://remote1/push
+  ## URL for Amazon Managed Promtheus
+  # - url: http://localhost:8005/workspaces/ws-69036eaf-e383-45b3-aa9a-217a4d75b190/api/v1/remote_write
 
   ## Prometheus StorageSpec for persistent data
   storageSpec:
