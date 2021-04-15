@@ -59,12 +59,22 @@ if [ -z "$(helm repo list | grep https://charts.gitlab.io)" ]; then
 fi
 helm repo update
 
+# kubectl create secret generic ${SMTP_PASSWORD_NAME} --from-literal=password=${AWS_SES_SECRET}
+
 helm upgrade --install ${RELEASE_NAME} gitlab/gitlab \
   --timeout 600s \
   --version=${CHART_VERSION} \
   --set global.hosts.domain=${DOMAIN} \
   --set certmanager-issuer.email=${ISSUER_EMAIL} \
   --set global.edition=ce \
+  --set gitlab-runner.runners.privileged=true \
+  # --set global.smtp.enabled=true \
+  # --set global.smtp.address="email-smtp.${REGION}.amazonaws.com" \
+  # --set global.smtp.port=587 \
+  # --set global.smtp.user_name=${AWS_SES_KEY} \
+  # --set global.smtp.password.secret=${SMTP_PASSWORD_NAME} \
+  # --set global.smtp.authentication="login" \
+  # --set global.smtp.starttls_auto=true \
   --create-namespace \
   -n ${NAMESPACE}
 
