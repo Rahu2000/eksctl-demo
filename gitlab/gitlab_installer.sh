@@ -68,6 +68,8 @@ helm upgrade --install ${RELEASE_NAME} gitlab/gitlab \
   --set certmanager-issuer.email=${ISSUER_EMAIL} \
   --set global.edition=ce \
   --set gitlab-runner.runners.privileged=true \
+  --create-namespace \
+  -n ${NAMESPACE}
   # --set global.smtp.enabled=true \
   # --set global.smtp.address="email-smtp.${REGION}.amazonaws.com" \
   # --set global.smtp.port=587 \
@@ -75,8 +77,6 @@ helm upgrade --install ${RELEASE_NAME} gitlab/gitlab \
   # --set global.smtp.password.secret=${SMTP_PASSWORD_NAME} \
   # --set global.smtp.authentication="login" \
   # --set global.smtp.starttls_auto=true \
-  --create-namespace \
-  -n ${NAMESPACE}
 
 sleep 5
 
