@@ -97,7 +97,7 @@ metrics:
     prometheus.io/path: "/metrics"
 
   serviceMonitor:
-    enabled: false
+    enabled: true
     additionalLabels: {}
     # namespace: velero # ServiceMonitor namespace
 

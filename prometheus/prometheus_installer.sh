@@ -24,7 +24,7 @@ export REGION="ap-northeast-2"
 export THANOS_SIDECAR="true" # [true|false]
 export BUCKET_NAME="s3-prometheus-thanos"
 export THANOS_SECRET_NAME="thanos-objstore-config"
-export RELEASE_NAME="prometheus"
+export RELEASE_NAME="prometheus-operator"
 
 source ../common/utils.sh
 
