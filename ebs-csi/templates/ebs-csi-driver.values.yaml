@@ -15,8 +15,6 @@ enableVolumeScheduling: true
 enableVolumeResizing: true
 enableVolumeSnapshot: SNAPSHOT_ENABLE
 
-# The "maximum number of attachable volumes" per node
-# Ref: https://docs.aws.amazon.com/ko_kr/AWSEC2/latest/UserGuide/volume_limits.html
 volumeAttachLimit: "39"
 
 resources:
@@ -27,12 +25,12 @@ resources:
     memory: 128Mi
 
 # priorityClassName: "operational-critical"
-nodeSelector: {}
 tolerateAllTaints: false
+
 tolerations:
-  - key: operator
+  - key: dedicated
     operator: Equal
-    value: "true"
+    value: "management"
     effect: NoSchedule
 affinity:
   nodeAffinity:
@@ -42,16 +40,7 @@ affinity:
           - key: role
             operator: In
             values:
-            - operator
-  # podAntiAffinity:
-  #   requiredDuringSchedulingIgnoredDuringExecution:
-  #     - labelSelector:
-  #         matchExpressions:
-  #         - key: app
-  #           operator: In
-  #           values:
-  #           - SERVICE_ACCOUNT
-  #       topologyKey: topology.kubernetes.io/zone
+            - management
 
 topologySpreadConstraints:
   - maxSkew: 1
@@ -68,11 +57,7 @@ topologySpreadConstraints:
 #   key2: value2
 extraVolumeTags: {}
 
-# If set, add pv/pvc metadata to plugin create requests as parameters.
 extraCreateMetadata: true
-
-# ID of the Kubernetes cluster used for tagging provisioned EBS volumes (optional).
-k8sTagClusterId: ""
 
 region: REGION
 

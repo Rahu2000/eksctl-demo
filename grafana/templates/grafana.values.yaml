@@ -43,17 +43,17 @@ operator:
   podAntiAffinityPreset: soft
 
   nodeAffinityPreset:
-    type: 'hard'
+    type: 'soft'
     key: 'role'
     values:
-      - operator
+      - management
 
   podAnnotations: {}
   podLabels: {}
   tolerations:
-    - key: operator
+    - key: dedicated
       operator: Equal
-      value: "true"
+      value: "management"
       effect: NoSchedule
 
   prometheus:
@@ -94,12 +94,12 @@ grafana:
     type: "soft"
     key: "role"
     values:
-      - operator
+      - management
 
   tolerations:
-    - key: operator
+    - key: dedicated
       operator: Equal
-      value: "true"
+      value: "management"
       effect: NoSchedule
 
   ## The grafana-operator client-configuration for this grafana instance

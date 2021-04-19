@@ -94,7 +94,7 @@ nodeGroups:
         RotateKubeletServerCertificate: true # has to be enabled, otherwise it will be disabled
 
 managedNodeGroups:
-  - name: operator
+  - name: management
     instanceType: t3.small
     minSize: 3
     desiredCapacity: 3
@@ -110,13 +110,13 @@ managedNodeGroups:
       # allow: true
       enableSsm: true
     labels:
-      role: operator
-      node-class: "operator-node"
+      role: management
+      node-class: "management-node"
       lifecycle: OnDemand
     tags:
-      nodegroup-role: operator
+      nodegroup-role: management
       k8s.io/cluster-autoscaler/node-template/label/lifecycle: OnDemand
-      k8s.io/cluster-autoscaler/node-template/taint/operator: "true:NoSchedule"
+      k8s.io/cluster-autoscaler/node-template/taint/dedicated: "management:NoSchedule"
       k8s.io/cluster-autoscaler/enabled: "true"
       k8s.io/cluster-autoscaler/eksworkshop: "owned"
     # iam:
@@ -129,7 +129,84 @@ managedNodeGroups:
     # instanceTypes: ["t4g.small", "t3a.small", "t3.small"]
     # ami: ami-0ebb427ec55cc0de7
     preBootstrapCommands:
-      - "sed -i '/^KUBELET_EXTRA_ARGS=/a KUBELET_EXTRA_ARGS+=\" --register-with-taints=operator=true:NoSchedule --feature-gates=CSIMigrationAWS=true \"' /etc/eks/bootstrap.sh"
+      - "sed -i '/^KUBELET_EXTRA_ARGS=/a KUBELET_EXTRA_ARGS+=\" --register-with-taints=dedicated=management:NoSchedule --feature-gates=CSIMigrationAWS=true \"' /etc/eks/bootstrap.sh"
+    # subnets:
+    #   - private-one
+    #   - private-three
+  - name: prometheus
+    instanceType: t3.small
+    minSize: 3
+    desiredCapacity: 3
+    maxSize: 4
+    # availabilityZones: ["us-west-2a", "us-west-2b"]
+    volumeType: gp3
+    volumeSize: 30
+    # volumeName: /dev/xvda
+    # volumeEncrypted: true
+    # securityGroups:
+    #   attachIDs: ["sg-1", "sg-2"]
+    ssh:
+      # allow: true
+      enableSsm: true
+    labels:
+      role: prometheus
+      node-class: "management-node"
+      lifecycle: OnDemand
+    tags:
+      nodegroup-role: prometheus
+      k8s.io/cluster-autoscaler/node-template/label/lifecycle: OnDemand
+      k8s.io/cluster-autoscaler/node-template/taint/dedicated: "prometheus:NoSchedule"
+      k8s.io/cluster-autoscaler/enabled: "true"
+      k8s.io/cluster-autoscaler/eksworkshop: "owned"
+    # iam:
+    #   withAddonPolicies:
+    #     externalDNS: true
+    #     certManager: true
+    privateNetworking: true
+    disableIMDSv1: true
+    # disablePodIMDS: true
+    # instanceTypes: ["t4g.small", "t3a.small", "t3.small"]
+    # ami: ami-0ebb427ec55cc0de7
+    preBootstrapCommands:
+      - "sed -i '/^KUBELET_EXTRA_ARGS=/a KUBELET_EXTRA_ARGS+=\" --register-with-taints=dedicated=prometheus:NoSchedule --feature-gates=CSIMigrationAWS=true \"' /etc/eks/bootstrap.sh"
+    # subnets:
+    #   - private-one
+    #   - private-three
+  - name: gitlab
+    instanceType: t3.xlarge
+    minSize: 2
+    desiredCapacity: 2
+    maxSize: 4
+    # availabilityZones: ["us-west-2a", "us-west-2b"]
+    volumeType: gp3
+    volumeSize: 30
+    # volumeName: /dev/xvda
+    # volumeEncrypted: true
+    # securityGroups:
+    #   attachIDs: ["sg-1", "sg-2"]
+    ssh:
+      # allow: true
+      enableSsm: true
+    labels:
+      role: gitlab
+      node-class: "management-node"
+      lifecycle: OnDemand
+    tags:
+      nodegroup-role: gitlab
+      k8s.io/cluster-autoscaler/node-template/label/lifecycle: OnDemand
+      k8s.io/cluster-autoscaler/enabled: "true"
+      k8s.io/cluster-autoscaler/eksworkshop: "owned"
+    # iam:
+    #   withAddonPolicies:
+    #     externalDNS: true
+    #     certManager: true
+    privateNetworking: true
+    disableIMDSv1: true
+    # disablePodIMDS: true
+    # instanceTypes: ["t4g.small", "t3a.small", "t3.small"]
+    # ami: ami-0ebb427ec55cc0de7
+    preBootstrapCommands:
+      - "sed -i '/^KUBELET_EXTRA_ARGS=/a KUBELET_EXTRA_ARGS+=\" --feature-gates=CSIMigrationAWS=true \"' /etc/eks/bootstrap.sh"
     # subnets:
     #   - private-one
     #   - private-three

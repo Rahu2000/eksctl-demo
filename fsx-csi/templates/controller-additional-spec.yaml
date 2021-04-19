@@ -6,15 +6,19 @@ affinity:
             - key: role
               operator: In
               values:
-                - operator
+                - management
   podAntiAffinity:
     preferredDuringSchedulingIgnoredDuringExecution:
-        - weight: 1
-          podAffinityTerm:
-            labelSelector:
-              matchLabels:
-                app.kubernetes.io/instance: aws-fsx-csi-driver-controller
-                app.kubernetes.io/name: aws-fsx-csi-driver
-            namespaces:
-              - kube-system
-            topologyKey: kubernetes.io/hostname
+      - weight: 1
+        podAffinityTerm:
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/instance: aws-fsx-csi-driver-controller
+              app.kubernetes.io/name: aws-fsx-csi-driver
+          namespaces:
+            - kube-system
+          topologyKey:
+            - "kubernetes.io/hostname"
+            - "topology.kubernetes.io/zone"
+            - "topology.kubernetes.io/region"
+            - "*"

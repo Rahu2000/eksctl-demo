@@ -85,13 +85,14 @@ prometheus:
 
 affinity:
   nodeAffinity:
-    requiredDuringSchedulingIgnoredDuringExecution:
-      nodeSelectorTerms:
-        - matchExpressions:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 1
+        preference:
+          matchExpressions:
           - key: role
             operator: In
             values:
-            - operator
+            - management
   podAntiAffinity:
     requiredDuringSchedulingIgnoredDuringExecution:
       - labelSelector:
@@ -102,9 +103,9 @@ affinity:
             - cert-manager
         topologyKey: topology.kubernetes.io/zone
 tolerations:
-  - key: operator
+  - key: dedicated
     operator: Equal
-    value: "true"
+    value: "management"
     effect: NoSchedule
 
 webhook:
@@ -120,13 +121,14 @@ webhook:
 
   affinity:
     nodeAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-        nodeSelectorTerms:
-          - matchExpressions:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 1
+        preference:
+          matchExpressions:
             - key: role
               operator: In
               values:
-              - operator
+              - management
     podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
         - labelSelector:
@@ -138,9 +140,9 @@ webhook:
           topologyKey: topology.kubernetes.io/zone
 
   tolerations:
-    - key: operator
+    - key: dedicated
       operator: Equal
-      value: "true"
+      value: "management"
       effect: NoSchedule
 
   serviceAccount:
@@ -179,13 +181,14 @@ cainjector:
 
   affinity:
     nodeAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-        nodeSelectorTerms:
-          - matchExpressions:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 1
+        preference:
+          matchExpressions:
             - key: role
               operator: In
               values:
-              - operator
+              - management
     podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
         - labelSelector:
@@ -194,11 +197,16 @@ cainjector:
               operator: In
               values:
               - cainjector
-          topologyKey: topology.kubernetes.io/zone
+          topologyKey:
+            - "kubernetes.io/hostname"
+            - "topology.kubernetes.io/zone"
+            - "topology.kubernetes.io/region"
+            - "*"
+
   tolerations:
-    - key: operator
+    - key: dedicated
       operator: Equal
-      value: "true"
+      value: "management"
       effect: NoSchedule
 
   serviceAccount:

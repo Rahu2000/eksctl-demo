@@ -1,26 +1,8 @@
-replicaCount: 2
+replicaCount: 1
 
 image: {}
-  # repository: amazon/aws-efs-csi-driver
-  # tag: "v1.1.1"
-  # pullPolicy: IfNotPresent
 
 sidecars: {}
-  # livenessProbeImage:
-  #   repository: quay.io/k8scsi/livenessprobe
-  #   tag: "v2.0.0"
-  # nodeDriverRegistrarImage:
-  #   repository: quay.io/k8scsi/csi-node-driver-registrar
-  #   tag: "v1.3.0"
-  # csiProvisionerImage:
-  #   repository: k8s.gcr.io/sig-storage/csi-provisioner
-  #   tag: "v2.0.4"
-
-imagePullSecrets: []
-nameOverride: ""
-fullnameOverride: ""
-
-podAnnotations: {}
 
 resources:
   limits:
@@ -32,9 +14,9 @@ resources:
 nodeSelector: {}
 
 tolerations:
-  - key: operator
+  - key: dedicated
     operator: Equal
-    value: "true"
+    value: "management"
     effect: NoSchedule
 
 affinity:
@@ -45,18 +27,22 @@ affinity:
             - key: role
               operator: In
               values:
-                - operator
+                - management
   podAntiAffinity:
     preferredDuringSchedulingIgnoredDuringExecution:
-        - weight: 1
-          podAffinityTerm:
-            labelSelector:
-              matchLabels:
-                app.kubernetes.io/instance: aws-efs-csi-driver-controller
-                app.kubernetes.io/name: aws-efs-csi-driver
-            namespaces:
-              - kube-system
-            topologyKey: kubernetes.io/hostname
+      - weight: 1
+        podAffinityTerm:
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/instance: aws-efs-csi-driver-controller
+              app.kubernetes.io/name: aws-efs-csi-driver
+          namespaces:
+            - kube-system
+          topologyKey:
+            - "kubernetes.io/hostname"
+            - "topology.kubernetes.io/zone"
+            - "topology.kubernetes.io/region"
+            - "*"
 
 node:
   podAnnotations: {}
@@ -76,13 +62,7 @@ hostAliases: {}
 
 dnsPolicy: ""
 dnsConfig: {}
-  # Example config which uses the AWS nameservers
-  # dnsPolicy: "None"
-  # dnsConfig:
-  #   nameservers:
-  #     - 169.254.169.253
 
-# The serviceAccount is not yet supported (1.1.1)
 serviceAccount:
   controller:
     create: CREATE_CONTROLLER
@@ -93,16 +73,3 @@ serviceAccount:
 # The controller is not yet supported (v1.1.1)
 controller:
   create: CREATE_CONTROLLER
-
-storageClasses: []
-# Add StorageClass resources like:
-# - name: efs-sc
-#   mountOptions:
-#   - tls
-#   parameters:
-#     provisioningMode: efs-ap
-#     fileSystemId: fs-92107410
-#     directoryPerms: "700"
-#     gidRangeStart: "1000"
-#     gidRangeEnd: "2000"
-#     basePath: "/dynamic_provisioning"

@@ -6,7 +6,7 @@ affinity:
             - key: role
               operator: In
               values:
-                - operator
+                - management
   podAntiAffinity:
     requiredDuringSchedulingIgnoredDuringExecution:
       - labelSelector:
@@ -15,10 +15,14 @@ affinity:
               operator: In
               values:
                 - aws-load-balancer-controller
-        topologyKey: topology.kubernetes.io/zone
+        topologyKey:
+          - "kubernetes.io/hostname"
+          - "topology.kubernetes.io/zone"
+          - "topology.kubernetes.io/region"
+          - "*"
 tolerations:
-  - key: operator
+  - key: dedicated
     operator: Equal
-    value: 'true'
+    value: 'management'
     effect: NoSchedule
 priorityClassName: system-cluster-critical

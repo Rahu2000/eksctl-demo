@@ -7,7 +7,7 @@ affinity:
             - key: role
               operator: In
               values:
-                - operator
+                - management
   podAntiAffinity:
     requiredDuringSchedulingIgnoredDuringExecution:
       - labelSelector:
@@ -16,7 +16,11 @@ affinity:
               operator: In
               values:
                 - cluster-autoscaler
-        topologyKey: topology.kubernetes.io/zone
+        topologyKey:
+          - "kubernetes.io/hostname"
+          - "topology.kubernetes.io/zone"
+          - "topology.kubernetes.io/region"
+          - "*"
 
 autoDiscovery:
   clusterName:  CLUSTER_NAME
@@ -82,23 +86,13 @@ extraVolumeMounts:
 fullnameOverride: RELEASE_NAME
 
 image: {}
-  # repository: us.gcr.io/k8s-artifacts-prod/autoscaling/cluster-autoscaler
-  # tag: CA_VERSION
-  # pullPolicy: IfNotPresent
-  # pullSecrets: []
-  ## - myRegistrKeySecretName
 
 podAnnotations:
   cluster-autoscaler.kubernetes.io/safe-to-evict: "false"
   kubernetes.io/psp: RELEASE_NAME
 
 podDisruptionBudget:
-  #maxUnavailable: 1
   minAvailable: 1
-
-podLabels: {}
-
-additionalLabels: {}
 
 priorityClassName: "system-cluster-critical"
 
@@ -137,39 +131,24 @@ securityContext:
 #   portName: http
 #   type: ClusterIP
 
-## Are you using Prometheus Operator?
 serviceMonitor:
-  # serviceMonitor.enabled -- If true, creates a Prometheus Operator ServiceMonitor.
-  enabled: false
-  # serviceMonitor.interval -- Interval that Prometheus scrapes Cluster Autoscaler metrics.
+  enabled: true
   interval: 10s
-  # serviceMonitor.namespace -- Namespace which Prometheus is running in.
   namespace: monitoring
-  ## [Prometheus Selector Label](https://github.com/helm/charts/tree/master/stable/prometheus-operator#prometheus-operator-1)
-  ## [Kube Prometheus Selector Label](https://github.com/helm/charts/tree/master/stable/prometheus-operator#exporters)
-  # serviceMonitor.selector -- Default to kube-prometheus install (CoreOS recommended), but should be set according to Prometheus install.
   selector:
     release: prometheus-operator
-  # serviceMonitor.path -- The path to scrape for metrics; autoscaler exposes `/metrics` (this is standard)
   path: /metrics
 
-## Custom PrometheusRule to be defined
-## The value is evaluated as a template, so, for example, the value can depend on .Release or .Chart
-## ref: https://github.com/coreos/prometheus-operator#customresourcedefinitions
 prometheusRule:
-  # prometheusRule.enabled -- If true, creates a Prometheus Operator PrometheusRule.
-  enabled: false
-  # prometheusRule.additionalLabels -- Additional labels to be set in metadata.
+  enabled: true
   additionalLabels: {}
   # prometheusRule.namespace -- Namespace which Prometheus is running in.
   namespace: monitoring
-  # prometheusRule.interval -- How often rules in the group are evaluated (falls back to `global.evaluation_interval` if not set).
   interval: null
-  # prometheusRule.rules -- Rules spec template (see https://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/api.md#rule).
   rules: []
 
 tolerations:
-  - key: operator
+  - key: dedicated
     operator: Equal
-    value: 'true'
+    value: 'management'
     effect: NoSchedule

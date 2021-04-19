@@ -45,20 +45,20 @@ securityContext:
 priorityClassName: "operational-critical"
 
 tolerations:
-  - key: operator
+  - key: dedicated
     operator: Equal
-    value: "true"
+    value: "management"
     effect: NoSchedule
 
 affinity:
   nodeAffinity:
-    requiredDuringSchedulingIgnoredDuringExecution:
-      nodeSelectorTerms:
-        - matchExpressions:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 1
+        preference:
           - key: role
             operator: In
             values:
-            - operator
+            - management
   podAntiAffinity:
     requiredDuringSchedulingIgnoredDuringExecution:
       - labelSelector:
@@ -67,9 +67,11 @@ affinity:
             operator: In
             values:
             - velero
-        topologyKey: topology.kubernetes.io/zone
-
-nodeSelector: {}
+        topologyKey:
+          - "kubernetes.io/hostname"
+          - "topology.kubernetes.io/zone"
+          - "topology.kubernetes.io/region"
+          - "*"
 
 extraVolumes:
   - name: tmpdir

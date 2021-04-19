@@ -26,7 +26,7 @@ LOCAL_OS_KERNEL="$(uname -a | awk -F ' ' ' {print $1} ')"
 
 ## Patch deployments/coredns
 ## Notice: should be replace tolerations values
-kubectl get deployments/coredns -n ${NAMESPACE} -ojson | jq '.spec.template.spec.tolerations +=  [{"key":"operator","operator":"Equal","value":"true","effect":"NoSchedule"}]' | jq '.spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions +=  [{"key":"role","operator":"In","values":["operator"]}]' | kubectl apply -f -
+kubectl get deployments/coredns -n ${NAMESPACE} -ojson | jq '.spec.template.spec.tolerations +=  [{"key":"dedicated","operator":"Equal","value":"management","effect":"NoSchedule"}]' | jq '.spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions +=  [{"key":"role","operator":"In","values":["management"]}]' | kubectl apply -f -
 
 kubectl rollout restart deployments/coredns -n ${NAMESPACE}
 

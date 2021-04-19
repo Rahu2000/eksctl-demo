@@ -67,10 +67,10 @@ helm upgrade --install aws-fsx-csi-driver \
 CONTROLLER_SPEC=$(cat ./templates/controller-additional-spec.yaml | yq | jq -r -c )
 
 ## Patch deployments/aws-fsx-csi-driver-controller
-kubectl get deployments/aws-fsx-csi-driver-controller -n kube-system -ojson | jq --argjson spec "${CONTROLLER_SPEC}" '.spec.template.spec +=  $spec' | jq '.spec.template.spec.tolerations +=  [{"key":"operator","operator":"Equal","value":"true","effect":"NoSchedule"}]' | kubectl apply -f -
+kubectl get deployments/aws-fsx-csi-driver-controller -n kube-system -ojson | jq --argjson spec "${CONTROLLER_SPEC}" '.spec.template.spec +=  $spec' | jq '.spec.template.spec.tolerations +=  [{"key":"dedicated","operator":"Equal","value":"management","effect":"NoSchedule"}]' | kubectl apply -f -
 
 ## Patch daemonsets/aws-fsx-csi-driver-daemonset
-kubectl get daemonsets/aws-fsx-csi-driver-daemonset -n kube-system -ojson | jq '.spec.template.spec.tolerations +=  [{"key":"operator","operator":"Equal","value":"true","effect":"NoSchedule"}]' | jq '.spec.template.spec +=  {"priorityClassName":"system-node-critical"}' | kubectl apply -f -
+kubectl get daemonsets/aws-fsx-csi-driver-daemonset -n kube-system -ojson | jq '.spec.template.spec.tolerations +=  [{"key":"dedicated","operator":"Equal","value":"management","effect":"NoSchedule"}]' | jq '.spec.template.spec +=  {"priorityClassName":"system-node-critical"}' | kubectl apply -f -
 
 ##############################################################
 # Create a FSX controller PodDisruptionBudget

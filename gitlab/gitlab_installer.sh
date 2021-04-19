@@ -68,6 +68,7 @@ helm upgrade --install ${RELEASE_NAME} gitlab/gitlab \
   --set certmanager-issuer.email=${ISSUER_EMAIL} \
   --set global.edition=ce \
   --set gitlab-runner.runners.privileged=true \
+  --set global.nodeSelector.role=gitlab \
   --create-namespace \
   -n ${NAMESPACE}
   # --set global.smtp.enabled=true \

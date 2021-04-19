@@ -39,7 +39,7 @@ nodeAffinityPreset:
   type: "hard"
   key: "role"
   values:
-    - operator
+    - management
 
 podAntiAffinityPreset: "soft"
 
@@ -58,9 +58,9 @@ topologySpreadConstraints:
 nodeSelector: {}
 
 tolerations:
-  - key: operator
+  - key: dedicated
     operator: Equal
-    value: 'true'
+    value: 'management'
     effect: NoSchedule
 
 ##  Metrics Server K8s svc properties

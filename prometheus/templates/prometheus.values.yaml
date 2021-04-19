@@ -56,12 +56,12 @@ operator:
     type: "soft"
     key: "role"
     values:
-    - operator
+    - prometheus
 
   tolerations:
-  - key: operator
+  - key: dedicated
     operator: Equal
-    value: "true"
+    value: "prometheus"
     effect: NoSchedule
 
   priorityClassName: "system-cluster-critical"
@@ -209,12 +209,12 @@ prometheus:
     type: "hard"
     key: "role"
     values:
-    - operator
+    - prometheus
 
   tolerations:
-  - key: operator
+  - key: dedicated
     operator: Equal
-    value: 'true'
+    value: 'prometheus'
     effect: NoSchedule
 
   scrapeInterval: ""
@@ -560,12 +560,12 @@ alertmanager:
     type: "soft"
     key: "role"
     values:
-    - operator
+    - prometheus
 
   tolerations:
-  - key: operator
+  - key: dedicated
     operator: Equal
-    value: 'true'
+    value: 'prometheus'
     effect: NoSchedule
 
   # config:
