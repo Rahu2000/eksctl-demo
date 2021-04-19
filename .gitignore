@@ -3,6 +3,7 @@
 
 # ignore
 example
+vault
 
 # ignore temporary files
 */**/*.bak

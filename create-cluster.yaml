@@ -28,40 +28,6 @@ iam:
   withOIDC: true
 
 nodeGroups:
-  # - name: spot
-  #   minSize: 2
-  #   maxSize: 2
-  #   volumeType: gp3
-  #   volumeSize: 30
-  #   volumeEncrypted: true
-  #   instancesDistribution:
-  #     maxPrice: 0.058
-  #     instanceTypes: ["t3a.xlarge"]
-  #     onDemandBaseCapacity: 0
-  #     onDemandPercentageAboveBaseCapacity: 0
-  #     spotAllocationStrategy: capacity-optimized
-  #   labels:
-  #     role: spot
-  #     lifecycle: Ec2Spot
-  #     aws.amazon.com/spot: "true"
-  #   availabilityZones: ["ap-northeast-2a","ap-northeast-2c"]
-  #   taints:
-  #     spotInstance: "true:PreferNoSchedule"
-  #   tags:
-  #     nodegroup-role: spot
-  #     k8s.io/cluster-autoscaler/node-template/label/lifecycle: Ec2Spot
-  #     k8s.io/cluster-autoscaler/node-template/label/aws.amazon.com/spot: "true"
-  #     k8s.io/cluster-autoscaler/node-template/taint/spotInstance: "true:PreferNoSchedule"
-  #     k8s.io/cluster-autoscaler/enabled: "true"
-  #     k8s.io/cluster-autoscaler/eksworkshop: "owned"
-  #   privateNetworking: true
-  #   disableIMDSv1: true
-  #   ssh:
-  #     enableSsm: true
-  #   kubeletExtraConfig:
-  #     featureGates:
-  #       CSIMigrationAWS: true
-  #       RotateKubeletServerCertificate: true
   - name: management
     minSize: 2
     maxSize: 2
@@ -96,40 +62,6 @@ nodeGroups:
       featureGates:
         CSIMigrationAWS: true
         RotateKubeletServerCertificate: true
-  # - name: gitlab
-  #   minSize: 2
-  #   maxSize: 2
-  #   volumeType: gp3
-  #   volumeSize: 30
-  #   volumeEncrypted: true
-  #   instancesDistribution:
-  #     maxPrice: 0.058
-  #     instanceTypes: ["t3a.xlarge"]
-  #     onDemandBaseCapacity: 0
-  #     onDemandPercentageAboveBaseCapacity: 0
-  #     spotAllocationStrategy: capacity-optimized
-  #   labels:
-  #     role: gitlab
-  #     lifecycle: Ec2Spot
-  #     aws.amazon.com/spot: "true"
-  #   availabilityZones: ["ap-northeast-2a","ap-northeast-2c"]
-  #   taints:
-  #     dedicated: "gitlab:NoSchedule"
-  #   tags:
-  #     nodegroup-role: spot
-  #     k8s.io/cluster-autoscaler/node-template/label/lifecycle: Ec2Spot
-  #     k8s.io/cluster-autoscaler/node-template/label/aws.amazon.com/spot: "true"
-  #     k8s.io/cluster-autoscaler/node-template/taint/dedicated: "gitlab:PreferNoSchedule"
-  #     k8s.io/cluster-autoscaler/enabled: "true"
-  #     k8s.io/cluster-autoscaler/eksworkshop: "owned"
-  #   privateNetworking: true
-  #   disableIMDSv1: true
-  #   ssh:
-  #     enableSsm: true
-  #   kubeletExtraConfig:
-  #     featureGates:
-  #       CSIMigrationAWS: true
-  #       RotateKubeletServerCertificate: true
   - name: prometheus
     minSize: 1
     maxSize: 1
@@ -153,7 +85,7 @@ nodeGroups:
       nodegroup-role: prometheus
       k8s.io/cluster-autoscaler/node-template/label/lifecycle: Ec2Spot
       k8s.io/cluster-autoscaler/node-template/label/aws.amazon.com/spot: "true"
-      k8s.io/cluster-autoscaler/node-template/taint/dedicated: "prometheus:PreferNoSchedule"
+      k8s.io/cluster-autoscaler/node-template/taint/dedicated: "prometheus:NoSchedule"
       k8s.io/cluster-autoscaler/enabled: "true"
       k8s.io/cluster-autoscaler/eksworkshop: "owned"
     privateNetworking: true
@@ -164,6 +96,74 @@ nodeGroups:
       featureGates:
         CSIMigrationAWS: true
         RotateKubeletServerCertificate: true
+  - name: gitlab
+    minSize: 1
+    maxSize: 1
+    volumeType: gp3
+    volumeSize: 30
+    volumeEncrypted: true
+    instancesDistribution:
+      maxPrice: 0.020
+      instanceTypes: ["t3a.medium"]
+      onDemandBaseCapacity: 0
+      onDemandPercentageAboveBaseCapacity: 0
+      spotAllocationStrategy: capacity-optimized
+    labels:
+      role: gitlab
+      lifecycle: Ec2Spot
+      aws.amazon.com/spot: "true"
+    availabilityZones: ["ap-northeast-2a","ap-northeast-2c"]
+    taints:
+      dedicated: "gitlab:PreferNoSchedule"
+    tags:
+      nodegroup-role: gitlab
+      k8s.io/cluster-autoscaler/node-template/label/lifecycle: Ec2Spot
+      k8s.io/cluster-autoscaler/node-template/label/aws.amazon.com/spot: "true"
+      k8s.io/cluster-autoscaler/node-template/taint/dedicated: "gitlab:PreferNoSchedule"
+      k8s.io/cluster-autoscaler/enabled: "true"
+      k8s.io/cluster-autoscaler/eksworkshop: "owned"
+    privateNetworking: true
+    disableIMDSv1: true
+    ssh:
+      enableSsm: true
+    kubeletExtraConfig:
+      featureGates:
+        CSIMigrationAWS: true
+        RotateKubeletServerCertificate: true
+  # - name: spot
+  #   minSize: 2
+  #   maxSize: 2
+  #   volumeType: gp3
+  #   volumeSize: 30
+  #   volumeEncrypted: true
+  #   instancesDistribution:
+  #     maxPrice: 0.058
+  #     instanceTypes: ["t3a.xlarge"]
+  #     onDemandBaseCapacity: 0
+  #     onDemandPercentageAboveBaseCapacity: 0
+  #     spotAllocationStrategy: capacity-optimized
+  #   labels:
+  #     role: spot
+  #     lifecycle: Ec2Spot
+  #     aws.amazon.com/spot: "true"
+  #   availabilityZones: ["ap-northeast-2a","ap-northeast-2c"]
+  #   taints:
+  #     spotInstance: "true:PreferNoSchedule"
+  #   tags:
+  #     nodegroup-role: spot
+  #     k8s.io/cluster-autoscaler/node-template/label/lifecycle: Ec2Spot
+  #     k8s.io/cluster-autoscaler/node-template/label/aws.amazon.com/spot: "true"
+  #     k8s.io/cluster-autoscaler/node-template/taint/spotInstance: "true:PreferNoSchedule"
+  #     k8s.io/cluster-autoscaler/enabled: "true"
+  #     k8s.io/cluster-autoscaler/eksworkshop: "owned"
+  #   privateNetworking: true
+  #   disableIMDSv1: true
+  #   ssh:
+  #     enableSsm: true
+  #   kubeletExtraConfig:
+  #     featureGates:
+  #       CSIMigrationAWS: true
+  #       RotateKubeletServerCertificate: true
 
 # managedNodeGroups:
 #   - name: management
@@ -228,12 +228,13 @@ nodeGroups:
 #     tags:
 #       nodegroup-role: gitlab
 #       k8s.io/cluster-autoscaler/node-template/label/lifecycle: OnDemand
+#       k8s.io/cluster-autoscaler/node-template/taint/dedicated: "gitlab:PreferNoSchedule"
 #       k8s.io/cluster-autoscaler/enabled: "true"
 #       k8s.io/cluster-autoscaler/eksworkshop: "owned"
 #     privateNetworking: true
 #     disableIMDSv1: true
 #     preBootstrapCommands:
-#       - "sed -i '/^KUBELET_EXTRA_ARGS=/a KUBELET_EXTRA_ARGS+=\" --feature-gates=CSIMigrationAWS=true \"' /etc/eks/bootstrap.sh"
+#       - "sed -i '/^KUBELET_EXTRA_ARGS=/a KUBELET_EXTRA_ARGS+=\" --register-with-taints=dedicated=gitlab:PreferNoSchedule --feature-gates=CSIMigrationAWS=true \"' /etc/eks/bootstrap.sh"
 #   - name: apps
 #     instanceType: t3.small
 #     minSize: 1

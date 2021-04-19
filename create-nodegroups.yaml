@@ -194,6 +194,7 @@ managedNodeGroups:
     tags:
       nodegroup-role: gitlab
       k8s.io/cluster-autoscaler/node-template/label/lifecycle: OnDemand
+      k8s.io/cluster-autoscaler/node-template/taint/dedicated: "gitlab:PreferNoSchedule"
       k8s.io/cluster-autoscaler/enabled: "true"
       k8s.io/cluster-autoscaler/eksworkshop: "owned"
     # iam:
@@ -206,7 +207,7 @@ managedNodeGroups:
     # instanceTypes: ["t4g.small", "t3a.small", "t3.small"]
     # ami: ami-0ebb427ec55cc0de7
     preBootstrapCommands:
-      - "sed -i '/^KUBELET_EXTRA_ARGS=/a KUBELET_EXTRA_ARGS+=\" --feature-gates=CSIMigrationAWS=true \"' /etc/eks/bootstrap.sh"
+      - "sed -i '/^KUBELET_EXTRA_ARGS=/a KUBELET_EXTRA_ARGS+=\" --register-with-taints=dedicated=gitlab:PreferNoSchedule --feature-gates=CSIMigrationAWS=true \"' /etc/eks/bootstrap.sh"
     # subnets:
     #   - private-one
     #   - private-three
