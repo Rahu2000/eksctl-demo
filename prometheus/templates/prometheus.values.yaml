@@ -1,8 +1,5 @@
 ---
 global:
-  # imageRegistry: myRegistryName
-  # imagePullSecrets:
-  #   - myRegistryKeySecretName
   storageClass: gp3
 
   labels: {}
@@ -239,7 +236,6 @@ prometheus:
   ## Thanos sidecar container configuration
   thanos:
     create: THANOS_SIDECAR
-    # prometheusUrl: "" # http://localhost:9090 (default)
     extraArgs: []
       # - --log.level=debug
 
@@ -338,17 +334,7 @@ exporters:
     enabled: true
 
   kube-state-metrics:
-    enabled: true
-    nodeAffinityPreset:
-      type: "soft"
-      key: "role"
-      values:
-        - management
-    tolerations:
-      - key: dedicated
-        operator: Equal
-        value: 'management'
-        effect: NoSchedule
+    enabled: false
 
 ## Node Exporter deployment configuration
 node-exporter:
@@ -366,10 +352,6 @@ node-exporter:
 
   tolerations:
   - operator: Exists
-
-kube-state-metrics:
-  serviceMonitor:
-    enabled: true
 
 ## Component scraping the kube-apiserver
 kubeApiServer:

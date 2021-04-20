@@ -9,6 +9,7 @@
 # Tested version
 #   EKS v1.19
 #   chart: bitnami/kube-prometheus (4.2.1)
+#          bitnami/kube-state-metrics (1.2.4)
 ##############################################################
 #!/bin/bash
 
@@ -20,11 +21,13 @@ export IAM_ROLE_NAME="AmazonEKS_Prometheus_Thanos_Role"
 export SERVICE_ACCOUNT="kube-prometheus.prometheus"
 export NAMESPACE="monitoring"
 export CHART_VERSION="4.2.1"
+export METRIC_CHART_VERSION="1.2.4"
 export REGION="ap-northeast-2"
 export THANOS_SIDECAR="true" # [true|false]
 export BUCKET_NAME="s3-prometheus-thanos"
 export THANOS_SECRET_NAME="thanos-objstore-config"
 export RELEASE_NAME="prometheus-operator"
+export METRIC_RELEASE_NAME="state-metric"
 
 source ../common/utils.sh
 
@@ -124,14 +127,32 @@ helm upgrade --install ${RELEASE_NAME} \
   -f ./templates/prometheus.values.yaml \
   --wait
 
-sleep 10
+##############################################################
+# Install State metric with Helm
+##############################################################
+if [ "Darwin" == "$LOCAL_OS_KERNEL" ]; then
+  sed -i.bak "s|PROMETHEUS_NAMESPACE|${NAMESPACE}|g" ./templates/state-metric.values.yaml
+else
+  sed -i.bak "s/PROMETHEUS_NAMESPACE/${NAMESPACE}/g" ./templates/state-metric.values.yaml
+fi
 
+helm upgrade --install ${METRIC_RELEASE_NAME} \
+  bitnami/kube-state-metrics \
+  --version=${METRIC_CHART_VERSION} \
+  --namespace ${NAMESPACE} \
+  -f ./templates/state-metric.values.yaml \
+  --wait
+
+##############################################################
+# Upddate prometheus
+##############################################################
 if [[ "true" == $THANOS_SIDECAR ]]; then
   # Check thanos-sidecar 'WAL dir is not accessible' error
-  ERR=$(kubectl logs --namespace ${NAMESPACE} statefulset/prometheus-${RELEASE_NAME}-kube-prometheus-prometheus -c thanos-sidecar 2>/dev/null | grep 'WAL dir is not accessible')
+  PROMETHEUS=$(kubectl get statefulset --namespace monitoring | grep ^prometheus | awk -F ' ' ' {print $1}')
+
+  ERR=$(kubectl logs --namespace ${NAMESPACE} statefulset/${PROMETHEUS} -c thanos-sidecar 2>/dev/null | grep 'WAL dir is not accessible')
 
   if [[ -n "$ERR" ]]; then
-    kubectl rollout restart --namespace ${NAMESPACE} \
-      statefulset/prometheus-${RELEASE_NAME}-kube-prometheus-prometheus
+    kubectl rollout restart --namespace ${NAMESPACE} statefulset/${PROMETHEUS}
   fi
 fi
