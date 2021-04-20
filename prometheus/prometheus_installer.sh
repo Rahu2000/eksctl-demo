@@ -124,6 +124,8 @@ helm upgrade --install ${RELEASE_NAME} \
   -f ./templates/prometheus.values.yaml \
   --wait
 
+sleep 10
+
 if [[ "true" == $THANOS_SIDECAR ]]; then
   # Check thanos-sidecar 'WAL dir is not accessible' error
   ERR=$(kubectl logs --namespace ${NAMESPACE} statefulset/${RELEASE_NAME}-prometheus-kube-prometheus-prometheus -c thanos-sidecar 2>/dev/null | grep 'WAL dir is not accessible')

@@ -3,12 +3,10 @@ global:
   # imageRegistry: myRegistryName
   # imagePullSecrets:
   #   - myRegistryKeySecretName
-  # storageClass: myStorageClass
+  storageClass: gp3
 
   labels: {}
-  # foo: bar
 
-## Role Based Access
 rbac:
   create: true
   apiVersion: v1beta1
@@ -16,8 +14,6 @@ rbac:
 
 operator:
   enabled: true
-  # image: {}
-  # hostAliases: []
   serviceAccount:
     create: true
     # name:
@@ -44,9 +40,6 @@ operator:
   ## Create a servicemonitor for the operator
   serviceMonitor:
     enabled: true
-    interval: ""
-    metricRelabelings: []
-    relabelings: []
   resources:
     limits: {}
     requests: {}
@@ -56,12 +49,12 @@ operator:
     type: "soft"
     key: "role"
     values:
-    - prometheus
+    - management
 
   tolerations:
   - key: dedicated
     operator: Equal
-    value: "prometheus"
+    value: "management"
     effect: NoSchedule
 
   priorityClassName: "system-cluster-critical"
@@ -76,19 +69,9 @@ operator:
     enabled: true
     namespace: kube-system
 
-  # prometheusConfigReloader:
-  #   image: {}
-
 ## Deploy a Prometheus instance
 prometheus:
   enabled: true
-
-  # image: {}
-  #   # registry: docker.io
-  #   # repository: bitnami/prometheus
-  #   # tag: 2.25.2-debian-10-r7
-  #   # pullSecrets:
-  #   #   - myRegistryKeySecretName
 
   serviceAccount:
     create: true
@@ -125,80 +108,6 @@ prometheus:
     metricRelabelings: []
     relabelings: []
 
-  ingress:
-    enabled: false
-    certManager: false
-    pathType: ImplementationSpecific
-
-    ## Override API Version (automatically detected if not set)
-    apiVersion: ""
-
-    ## When the ingress is enabled, a host pointing to this will be created
-    hostname: prometheus.local
-
-    ## The Path to Prometheus. You may need to set this to '/*' in order to use this
-    ## with ALB ingress controllers.
-    path: /
-
-    ## Ingress annotations done as key:value pairs
-    ## For a full list of possible ingress annotations, please see
-    ## ref: https://github.com/kubernetes/ingress-nginx/blob/master/docs/user-guide/nginx-configuration/annotations.md
-    ##
-    ## If tls is set to true, annotation ingress.kubernetes.io/secure-backends: "true" will automatically be set
-    ## If certManager is set to true, annotation kubernetes.io/tls-acme: "true" will automatically be set
-    ##
-    annotations: {}
-    #  kubernetes.io/ingress.class: nginx
-
-    ## Enable TLS configuration for the hostname defined at prometheus.ingress.hostname parameter
-    ## TLS certificates will be retrieved from a TLS secret with name: {{- printf "%s-tls" .Values.prometheus.ingress.hostname }}
-    ## You can use the prometheus.ingress.secrets parameter to create this TLS secret or relay on cert-manager to create it
-    tls: false
-
-    ## The list of additional hostnames to be covered with this ingress record.
-    ## Most likely the hostname above will be enough, but in the event more hosts are needed, this is an array
-    ## extraHosts:
-    ## - name: prometheus.local
-    ##   path: /
-    ##
-
-    ## Any additional arbitrary paths that may need to be added to the ingress under the main host.
-    ## For example: The ALB ingress controller requires a special rule for handling SSL redirection.
-    ## extraPaths:
-    ## - path: /*
-    ##   backend:
-    ##     serviceName: ssl-redirect
-    ##     servicePort: use-annotation
-    ##
-
-    ## The tls configuration for additional hostnames to be covered with this ingress record.
-    ## see: https://kubernetes.io/docs/concepts/services-networking/ingress/#tls
-    ## extraTls:
-    ## - hosts:
-    ##     - prometheus.local
-    ##   secretName: prometheus.local-tls
-    ##
-
-    ## If you're providing your own certificates, please use this to add the certificates as secrets
-    ## key and certificate should start with -----BEGIN CERTIFICATE----- or
-    ## -----BEGIN RSA PRIVATE KEY-----
-    ##
-    ## name should line up with a tlsSecret set further up
-    ## If you're using cert-manager, this is unneeded, as it will create the secret for you if it is not set
-    ##
-    ## It is also possible to create and manage the certificates outside of this helm chart
-    ## Please see README.md for more information
-    ##
-    secrets: []
-    ## - name: prometheus.local-tls
-    ##   key:
-    ##   certificate:
-    ##
-
-  ## If not creating an ingress but still exposing the service some other way (like a proxy)
-  ## let Prometheus know what its external URL is so that it can properly create links
-  # externalUrl: https://prometheus.example.com
-
   resources:
     limits: {}
     requests: {}
@@ -221,62 +130,8 @@ prometheus:
   evaluationInterval: ""
   listenLocal: false
   enableAdminAPI: false
-  # alertingEndpoints: []
-
-  externalLabels: {}
-  replicaExternalLabelName: ""
-
-  ## If true, the Operator won't add the external label used to denote replica name
-  replicaExternalLabelNameClear: false
-
-  ## Prefix used to register routes, overriding externalUrl route.
-  ## Useful for proxies that rewrite URLs.
-  routePrefix: /
-
-  ## Name of the external label used to denote Prometheus instance name
-  prometheusExternalLabelName: ""
-
-  ## If true, the Operator won't add the external label used to denote Prometheus instance name
-  prometheusExternalLabelNameClear: false
-
-  ## Secrets that should be mounted into the Prometheus Pods
-  secrets: []
-
-  ## ConfigMaps that should be mounted into the Prometheus Pods
-  configMaps: []
-
-  ## The query command line flags when starting Prometheus
-  ## ref: https://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/api.md#queryspec
-  querySpec: {}
-
-  ## See https://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/api.md#namespaceselector for usage
-  ruleNamespaceSelector: {}
-
-  ## If {}, select all ServiceMonitors
-  ruleSelector: {}
-
-  ## If {}, select all ServiceMonitors
-  serviceMonitorSelector: {}
-  # matchLabels:
-  #   foo: bar
-
-  ## Namespaces to be selected for ServiceMonitor discovery.
-  serviceMonitorNamespaceSelector: {}
-
-  ## If {}, select all PodMonitors
-  podMonitorSelector: {}
-
-  ## Namespaces to be selected for PodMonitor discovery
-  podMonitorNamespaceSelector: {}
-
-  ## If {}, select all Probes
-  probeSelector: {}
-
-  ## See https://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/api.md#namespaceselector for usage
-  probeNamespaceSelector: {}
 
   retention: 10d
-
   ## Maximum size of metrics
   retentionSize: ""
 
@@ -287,8 +142,6 @@ prometheus:
   paused: false
 
   replicaCount: 1
-  logLevel: info
-  logFormat: logfmt
 
   podMetadata:
     labels: {}
@@ -383,26 +236,9 @@ prometheus:
   #             summary: "Node overtemperature alarm (instance {{ $labels.instance }})"
   #             description: "Physical node temperature alarm triggered\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}"
 
-  additionalScrapeConfigs:
-    enabled: false
-    type: external
-    external:
-      name: ""
-      key: ""
-    internal:
-      jobList: []
-
-  ## Enable additional Prometheus alert relabel configs that are managed externally to this chart
-  ## Note that the prometheus will fail to provision if the correct secret does not exist.
-  additionalAlertRelabelConfigsExternal:
-    enabled: false
-    # name:
-    # key:
-
   ## Thanos sidecar container configuration
   thanos:
     create: THANOS_SIDECAR
-    # image: {}
     # prometheusUrl: "" # http://localhost:9090 (default)
     extraArgs: []
       # - --log.level=debug
@@ -423,51 +259,22 @@ prometheus:
       type: ClusterIP
       port: 10901
       clusterIP: None
-      # nodePort: 30901
-      # loadBalancerIP:
-      # loadBalancerSourceRanges:
-      # - 10.10.10.0/24
       annotations: {}
-
-      ## Extra ports to expose from the Thanos sidecar container
-      extraPorts: []
-      #   - name: http
-      #     port: 10902
-      #     targetPort: http
-      #     protocol: TCP
 
     ingress:
       enabled: false
-      certManager: false
-      annotations: {}
-        # https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/ingress/annotations/
-        # kubernetes.io/ingress.class: alb
-        # alb.ingress.kubernetes.io/scheme: internal
+
     spec:
       hosts:
         - name: thanos.prometheus.local
           path: /
 
-      ## see: https://kubernetes.io/docs/concepts/services-networking/ingress/#tls
-      tls: {}
-      # - hosts:
-      #     - thanos.prometheus.local
-      #   secretName: thanos.prometheus.local-tls
-  # portName: web
-
 ## Configuration for alertmanager
 alertmanager:
   enabled: true
-  # image: {}
-  #   # registry: docker.io
-  #   # repository: bitnami/alertmanager
-  #   # tag: 0.21.0-debian-10-r261
-  #   # # pullSecrets:
-  #   # #   - myRegistryKeySecretName
 
   serviceAccount:
     create: true
-    # name:
 
   securityContext:
     enabled: true
@@ -477,9 +284,7 @@ alertmanager:
   podDisruptionBudget:
     enabled: false
     minAvailable: 1
-    # maxUnavailable:
 
-  ## Alertmanager Service
   service:
     type: ClusterIP
     port: 9093
@@ -490,67 +295,15 @@ alertmanager:
     # - 10.10.10.0/24
 
     externalTrafficPolicy: Cluster
-    # healthCheckNodePort:
     # stickySessions: true
     annotations: {}
 
-  ## If true, create a serviceMonitor for alertmanager
   serviceMonitor:
     enabled: true
-    # interval: ""
-    # metricRelabelings: []
-    # relabelings: []
 
-  ## Configure the ingress resource that allows you to access the
   ingress:
     enabled: false
-    certManager: false
-    pathType: ImplementationSpecific
-    apiVersion:
-    hostname: alertmanager.local
-    path: /
 
-    ## If tls is set to true, annotation ingress.kubernetes.io/secure-backends: "true" will automatically be set
-    ## If certManager is set to true, annotation kubernetes.io/tls-acme: "true" will automatically be set
-    annotations: {}
-    #  kubernetes.io/ingress.class: nginx
-
-    ## Enable TLS configuration for the hostname defined at alertmanager.ingress.hostname parameter
-    ## TLS certificates will be retrieved from a TLS secret with name: {{- printf "%s-tls" .Values.alertmanager.ingress.hostname }}
-    ## You can use the alertmanager.ingress.secrets parameter to create this TLS secret or relay on cert-manager to create it
-    tls: false
-
-    ## The list of additional hostnames to be covered with this ingress record.
-    ## Most likely the hostname above will be enough, but in the event more hosts are needed, this is an array
-    ## extraHosts:
-    ## - name: alertmanager.local
-    ##   path: /
-    ##
-
-    ## Any additional arbitrary paths that may need to be added to the ingress under the main host.
-    ## For example: The ALB ingress controller requires a special rule for handling SSL redirection.
-    ## extraPaths:
-    ## - path: /*
-    ##   backend:
-    ##     serviceName: ssl-redirect
-    ##     servicePort: use-annotation
-    ##
-
-    ## The tls configuration for additional hostnames to be covered with this ingress record.
-    ## see: https://kubernetes.io/docs/concepts/services-networking/ingress/#tls
-    ## extraTls:
-    ## - hosts:
-    ##     - alertmanager.local
-    ##   secretName: alertmanager.local-tls
-    ##
-
-    secrets: []
-    ## - name: alertmanager.local-tls
-    ##   key:
-    ##   certificate:
-    ##
-
-  # externalUrl: https://alertmanager.example.com
   resources:
     limits: {}
     requests: {}
@@ -563,79 +316,39 @@ alertmanager:
     - prometheus
 
   tolerations:
-  - key: dedicated
-    operator: Equal
-    value: 'prometheus'
-    effect: NoSchedule
-
-  # config:
-  #   global:
-  #     resolve_timeout: 5m
-  #   route:
-  #     group_by: ['job']
-  #     group_wait: 30s
-  #     group_interval: 5m
-  #     repeat_interval: 12h
-  #     receiver: 'null'
-  #     routes:
-  #       - match:
-  #           alertname: Watchdog
-  #         receiver: 'null'
-  #   receivers:
-  #     - name: 'null'
-
-  ## Alertmanager configuration is created externally
-  ## If true, `alertmanager.config` is ignored, and a secret will not be created.
-  ##
-  ## Alertmanager requires a secret named `alertmanager-{{ template "kube-prometheus.alertmanager.fullname" . }}`
-  ## It must contain:
-  ##     alertmanager.yaml: <config>
-  ## ref: https://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/user-guides/alerting.md#alerting
-  externalConfig: false
+    - key: dedicated
+      operator: Equal
+      value: 'prometheus'
+      effect: NoSchedule
 
   replicaCount: 1
-
-  logLevel: info
-  logFormat: logfmt
-
-  podMetadata:
-    labels: {}
-    annotations: {}
-
-  # secrets: []
-  # configMaps: []
   retention: 120h
-  # storageSpec: {}
 
   persistence:
     enabled: false
-    storageClass: gp3
-    accessModes:
-      - ReadWriteOnce
-    size: 8Gi
 
   paused: false
 
-  ## ListenLocal makes the Alertmanager server listen on loopbac
-  listenLocal: false
-
   priorityClassName: "system-cluster-critical"
-
-  ## AdditionalPeers allows injecting a set of additional Alertmanagers to peer with to form a highly available cluster.
-  additionalPeers: []
-
   routePrefix: /
-
-  ## Port name used for the pods and governing service. This defaults to web
   portName: web
 
-## Exporters
 exporters:
   node-exporter:
     enabled: true
 
   kube-state-metrics:
     enabled: true
+    nodeAffinityPreset:
+      type: "soft"
+      key: "role"
+      values:
+        - management
+    tolerations:
+      - key: dedicated
+        operator: Equal
+        value: 'management'
+        effect: NoSchedule
 
 ## Node Exporter deployment configuration
 node-exporter:
@@ -662,11 +375,6 @@ kube-state-metrics:
 kubeApiServer:
   enabled: true
 
-  serviceMonitor:
-    interval: ""
-    metricRelabelings: []
-    relabelings: []
-
 ## Component scraping the kube-controller-manager
 kubeControllerManager:
   enabled: true
@@ -682,11 +390,8 @@ kubeControllerManager:
 
   serviceMonitor:
     interval: ""
-    ## Enable scraping kube-controller-manager over https.
     https: false
-    # Skip TLS certificate validation when scraping
     insecureSkipVerify: null
-    # Name of the server to use when validating TLS certificate
     serverName: null
     metricRelabelings: []
     relabelings: []
@@ -704,32 +409,6 @@ kubeScheduler:
     # selector:
     #   component: kube-scheduler
 
-  serviceMonitor:
-    interval: ""
-
-    ## Enable scraping kube-scheduler over https.
-    https: false
-
-    ## Skip TLS certificate validation when scraping
-    insecureSkipVerify: null
-
-    ## Name of the server to use when validating TLS certificate
-    serverName: null
-
-    metricRelabelings: []
-    # - action: keep
-    #   regex: 'kube_(daemonset|deployment|pod|namespace|node|statefulset).+'
-    #   sourceLabels: [__name__]
-
-    #   relabel configs to apply to samples before ingestion.
-    relabelings: []
-    # - sourceLabels: [__meta_kubernetes_pod_node_name]
-    #   separator: ;
-    #   regex: ^(.*)$
-    #   targetLabel: nodename
-    #   replacement: $1
-    #   action: replace
-
 ## Component scraping coreDns
 coreDns:
   enabled: true
@@ -741,30 +420,8 @@ coreDns:
     selector:
       k8s-app: kube-dns
 
-  serviceMonitor:
-    interval: ""
-
-    metricRelabelings: []
-    # - action: keep
-    #   regex: 'kube_(daemonset|deployment|pod|namespace|node|statefulset).+'
-    #   sourceLabels: [__name__]
-
-    #   relabel configs to apply to samples before ingestion.
-    relabelings: []
-    # - sourceLabels: [__meta_kubernetes_pod_node_name]
-    #   separator: ;
-    #   regex: ^(.*)$
-    #   targetLabel: nodename
-    #   replacement: $1
-    #   action: replace
-
-## Component scraping the kube-proxy
 kubeProxy:
   enabled: true
-  endpoints: []
-  # - 10.141.4.22
-  # - 10.141.4.23
-  # - 10.141.4.24
 
   namespace: kube-system
   service:
@@ -775,16 +432,7 @@ kubeProxy:
       k8s-app: kube-proxy
 
   serviceMonitor:
-    ## Enable scraping kube-proxy over https.
-    https: false
-
-    interval: ""
-
-    ## Metric relabeling
-    metricRelabelings: []
-
-    ## Relabel configs
-    relabelings: []
+    https: true
 
 # Component scraping for kubelet and kubelet hosted cAdvisor
 kubelet:
@@ -793,16 +441,3 @@ kubelet:
 
   serviceMonitor:
     https: true
-    interval: ""
-
-    ## Metric relabeling
-    metricRelabelings: []
-
-    ## Relabel configs
-    relabelings: []
-
-    ## Metric relabeling for scraping cAdvisor
-    cAdvisorMetricRelabelings: []
-
-    ## Relabel configs for scraping cAdvisor
-    cAdvisorRelabelings: []
