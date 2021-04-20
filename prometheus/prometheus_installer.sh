@@ -27,7 +27,7 @@ export THANOS_SIDECAR="true" # [true|false]
 export BUCKET_NAME="s3-prometheus-thanos"
 export THANOS_SECRET_NAME="thanos-objstore-config"
 export RELEASE_NAME="prometheus-operator"
-export METRIC_RELEASE_NAME="state-metric"
+export METRIC_RELEASE_NAME="prometheus"
 
 source ../common/utils.sh
 
