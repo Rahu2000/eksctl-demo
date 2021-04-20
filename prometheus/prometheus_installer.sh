@@ -128,10 +128,10 @@ sleep 10
 
 if [[ "true" == $THANOS_SIDECAR ]]; then
   # Check thanos-sidecar 'WAL dir is not accessible' error
-  ERR=$(kubectl logs --namespace ${NAMESPACE} statefulset/${RELEASE_NAME}-prometheus-kube-prometheus-prometheus -c thanos-sidecar 2>/dev/null | grep 'WAL dir is not accessible')
+  ERR=$(kubectl logs --namespace ${NAMESPACE} statefulset/prometheus-${RELEASE_NAME}-kube-prometheus-prometheus -c thanos-sidecar 2>/dev/null | grep 'WAL dir is not accessible')
 
   if [[ -n "$ERR" ]]; then
     kubectl rollout restart --namespace ${NAMESPACE} \
-      statefulset/${RELEASE_NAME}-prometheus-kube-prometheus-prometheus
+      statefulset/prometheus-${RELEASE_NAME}-kube-prometheus-prometheus
   fi
 fi
