@@ -18,7 +18,7 @@ export CLUSTER_NAME="eksworkshop"
 export IAM_POLICY_NAME="AmazonEKS_Prometheus_Thanos_Policy"
 export IAM_ROLE_NAME="AmazonEKS_Thanos_Role"
 export SERVICE_ACCOUNT="thanos"
-export NAMESPACE="thanos"
+export NAMESPACE="monitoring"
 export CHART_VERSION="3.15.1"
 export THANOS_SECRET_NAME="thanos-objstore-config"
 export RELEASE_NAME="thanos"
@@ -35,17 +35,10 @@ IAM_POLICY_ARN=""
 if [ "delete" == "$1" ]; then
   helm delete ${RELEASE_NAME} --namespace ${NAMESPACE}
 
-  kubectl delete ns ${NAMESPACE}
+  if [ $PROMETHEUS_NAMESPACE != $NAMESPACE ]; then
+    kubectl delete ns ${NAMESPACE}
+  fi
 
-  # kubectl delete --ignore-not-found customresourcedefinitions\
-  #   alertmanagerconfigs.monitoring.coreos.com\
-  #   alertmanagers.monitoring.coreos.com\
-  #   podmonitors.monitoring.coreos.com\
-  #   probes.monitoring.coreos.com\
-  #   prometheuses.monitoring.coreos.com\
-  #   prometheusrules.monitoring.coreos.com\
-  #   servicemonitors.monitoring.coreos.com\
-  #   thanosrulers.monitoring.coreos.com
   exit 0
 fi
 
