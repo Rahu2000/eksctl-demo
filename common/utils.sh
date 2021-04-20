@@ -21,8 +21,6 @@
 
 ## Create IAM Role based on OIDC
 function createRole {
-  echo "Creating a IAM role: "$4" ..."
-
   FILE_NAME=$(uuidgen).json
   AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
   OIDC_PROVIDER=$(aws eks describe-cluster --name "$1" --query "cluster.identity.oidc.issuer" --output text | sed -e "s/^https:\/\///")
@@ -64,8 +62,6 @@ EOF
         fi
         sleep 1
     done
-  else
-    echo "NOTE: $4 exists. Check the role's OIDC provider."
   fi
 
   echo $ROLE_ARN
