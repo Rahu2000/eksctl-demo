@@ -138,7 +138,13 @@ queryFrontend:
 
 ## Thanos Bucket Web parameters
 bucketweb:
-  enabled: true
+  enabled: false
+
+  serviceAccount:
+    annotations:
+      eks.amazonaws.com/role-arn: IAM_ROLE_ARN
+    existingServiceAccount: SERVICE_ACCOUNT
+
   refresh: 30m
   timeout: 5m
 
