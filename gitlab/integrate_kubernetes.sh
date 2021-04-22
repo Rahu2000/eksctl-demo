@@ -32,37 +32,38 @@ cat ca.pem
 echo ""
 
 cat << EOF > /tmp/gitlab-admin-service-account.yaml
-  apiVersion: v1
-  kind: ServiceAccount
-  metadata:
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: gitlab
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: gitlab-admin
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+  - kind: ServiceAccount
     name: gitlab
     namespace: kube-system
-  ---
-  apiVersion: rbac.authorization.k8s.io/v1beta1
-  kind: ClusterRoleBinding
-  metadata:
-    name: gitlab-admin
-  roleRef:
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: gitlab-cluster-admin
+subjects:
+  - kind: Group
     apiGroup: rbac.authorization.k8s.io
-    kind: ClusterRole
-    name: cluster-admin
-  subjects:
-    - kind: ServiceAccount
-      name: gitlab
-      namespace: kube-system
-  ---
-  kind: ClusterRoleBinding
-  apiVersion: rbac.authorization.k8s.io/v1
-  metadata:
-    name: gitlab-cluster-admin
-  subjects:
-    - kind: Group
-      apiGroup: rbac.authorization.k8s.io
-      name: 'system:serviceaccounts'
-  roleRef:
-    apiGroup: rbac.authorization.k8s.io
-    kind: ClusterRole
-    name: cluster-admin
+    name: 'system:serviceaccounts'
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
 EOF
 
 echo 'create a gitlab-admin ServiceAccount ...'
