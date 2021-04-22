@@ -75,9 +75,18 @@ else
   sed -i "s/CHART_VERSION/${CHART_VERSION}/g" ./templates/thanos-service-account.yaml
 fi
 
-kubectl create ns $NAMESPACE
-kubectl apply -f ./templates/thanos-service-account.yaml
+##############################################################
+# Prerequisites
+#   - Namespace
+#   - Object store secret
+#   - ServiceAccount
+##############################################################
+if [ $PROMETHEUS_NAMESPACE != $NAMESPACE ]; then
+  kubectl create ns $NAMESPACE
+  kubectl get secret "$THANOS_SECRET_NAME" --namespace "$NAMESPACE" || kubectl get secret "$THANOS_SECRET_NAME" --namespace="$PROMETHEUS_NAMESPACE" -oyaml | grep -v '^\s*namespace:\s' | kubectl apply --namespace="$NAMESPACE" -f -
+fi
 
+kubectl apply -f ./templates/thanos-service-account.yaml
 ##############################################################
 # Install Thanos with Helm
 ##############################################################

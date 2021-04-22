@@ -1,5 +1,8 @@
 existingObjstoreSecret: THANOS_SECRET_NAME
 
+fullnameOverride: ""
+
+## Thanos Query parameters
 query:
   enabled: true
   replicaLabel: [replica]
@@ -7,38 +10,6 @@ query:
     enabled: true
     sidecarsService: "THANOS_SIDECAR_SERVICE"
     sidecarsNamespace: "PROMETHEUS_NAMESPACE"
-
-  ## Statically configure store APIs to connect with Thanos Query
-  ##
-  stores: []
-
-  ## Query Service Discovery Configuration
-  ## Specify content for servicediscovery.yml
-  ##
-  # sdConfig:
-
-  ## ConfigMap with Query Service Discovery Configuration
-  ## NOTE: This will override query.sdConfig
-  ##
-  # existingSDConfigmap:
-
-  ## Extra environment variable(s) to set on query container.
-  ##
-  ## extraEnv:
-  ## - name: VARNAME1
-  ##   value: value1
-  ## - name: VARNAME2
-  ##   valueFrom:
-  ##     secretKeyRef:
-  ##       name: existing-secret
-  ##       key: varname2-key
-  ##
-  extraEnv: []
-
-  ## Extra Flags to passed to Thanos Query
-  ##
-  extraFlags: []
-
   replicaCount: 1
   podAffinityPreset: soft
   podAntiAffinityPreset: soft
@@ -52,18 +23,10 @@ query:
     operator: Equal
     value: "management"
     effect: NoSchedule
-
   priorityClassName: "system-cluster-critical"
-
-  securityContext:
-    enabled: true
-    fsGroup: 1001
-    runAsUser: 1001
-
   rbac:
     create: true
   pspEnabled: true
-
   resources:
     limits: {}
     #   cpu: 100m
@@ -71,32 +34,22 @@ query:
     requests: {}
     #   cpu: 100m
     #   memory: 128Mi
-
-  ## Autoscaling parameters
   autoscaling:
     enabled: true
     minReplicas: 1
     maxReplicas: 10
     targetCPU: 50
     targetMemory: 50
-
   pdb:
     create: true
     minAvailable: 1
-
   ingress:
     enabled: false
 
 ## Thanos Query Frontend parameters
 queryFrontend:
   enabled: true
-
-  extraEnv: []
-
-  extraFlags: []
-
   replicaCount: 1
-
   podAffinityPreset: "soft"
   podAntiAffinityPreset: soft
   nodeAffinityPreset:
@@ -109,14 +62,10 @@ queryFrontend:
     operator: Equal
     value: "management"
     effect: NoSchedule
-
   priorityClassName: "system-cluster-critical"
-
   rbac:
     create: true
-
   pspEnabled: true
-
   resources:
     limits: {}
     #   cpu: 100m
@@ -124,14 +73,12 @@ queryFrontend:
     requests: {}
     #   cpu: 100m
     #   memory: 128Mi
-
   autoscaling:
     enabled: false
     minReplicas: 1
     maxReplicas: 10
     targetCPU: 50
     targetMemory: 50
-
   pdb:
     create: true
     minAvailable: 1
@@ -139,30 +86,11 @@ queryFrontend:
 ## Thanos Bucket Web parameters
 bucketweb:
   enabled: false
-
   serviceAccount:
     annotations:
       eks.amazonaws.com/role-arn: IAM_ROLE_ARN
     existingServiceAccount: SERVICE_ACCOUNT
-
-  refresh: 30m
-  timeout: 5m
-
-  ## Extra environment variable(s) to set on bucketweb container.
-  ##
-  ## extraEnv:
-  ## - name: VARNAME1
-  ##   value: value1
-  ## - name: VARNAME2
-  ##   valueFrom:
-  ##     secretKeyRef:
-  ##       name: existing-secret
-  ##       key: varname2-key
-  ##
-  extraEnv: []
-  extraFlags: []
   replicaCount: 1
-
   podAffinityPreset: "soft"
   podAntiAffinityPreset: soft
   nodeAffinityPreset:
@@ -175,14 +103,7 @@ bucketweb:
       operator: Equal
       value: "management"
       effect: NoSchedule
-
   priorityClassName: "system-cluster-critical"
-
-  securityContext:
-    enabled: true
-    fsGroup: 1001
-    runAsUser: 1001
-
   resources:
     limits: {}
     #   cpu: 100m
@@ -190,39 +111,16 @@ bucketweb:
     requests: {}
     #   cpu: 100m
     #   memory: 128Mi
-
   pdb:
     create: false
 
 ## Thanos Compactor parameters
 compactor:
   enabled: true
-
   serviceAccount:
     annotations:
       eks.amazonaws.com/role-arn: IAM_ROLE_ARN
     existingServiceAccount: SERVICE_ACCOUNT
-
-  retentionResolutionRaw: 30d
-  retentionResolution5m: 30d
-  retentionResolution1h: 10y
-
-  consistencyDelay: 30m
-
-  ## Extra environment variable(s) to set on compactor container.
-  ##
-  ## extraEnv:
-  ## - name: VARNAME1
-  ##   value: value1
-  ## - name: VARNAME2
-  ##   valueFrom:
-  ##     secretKeyRef:
-  ##       name: existing-secret
-  ##       key: varname2-key
-  ##
-  extraEnv: []
-  extraFlags: []
-
   podAffinityPreset: "soft"
   podAntiAffinityPreset: soft
   nodeAffinityPreset:
@@ -230,20 +128,12 @@ compactor:
     key: "role"
     values:
       - management
-
   tolerations:
     - key: dedicated
       operator: Equal
       value: "management"
       effect: NoSchedule
-
   priorityClassName: "system-cluster-critical"
-
-  securityContext:
-    enabled: true
-    fsGroup: 1001
-    runAsUser: 1001
-
   resources:
     limits: {}
     #   cpu: 100m
@@ -251,7 +141,6 @@ compactor:
     requests: {}
     #   cpu: 100m
     #   memory: 128Mi
-
   persistence:
     enabled: true
     storageClass: gp3
@@ -260,28 +149,11 @@ compactor:
 ## Thanos Store Gateway parameters
 storegateway:
   enabled: true
-
   serviceAccount:
     annotations:
       eks.amazonaws.com/role-arn: IAM_ROLE_ARN
     existingServiceAccount: SERVICE_ACCOUNT
-
-  ## Extra environment variable(s) to set on storegateway container.
-  ##
-  ## extraEnv:
-  ## - name: VARNAME1
-  ##   value: value1
-  ## - name: VARNAME2
-  ##   valueFrom:
-  ##     secretKeyRef:
-  ##       name: existing-secret
-  ##       key: varname2-key
-  ##
-  extraEnv: []
-  extraFlags: []
-
   replicaCount: 1
-
   podAffinityPreset: "soft"
   podAntiAffinityPreset: soft
   nodeAffinityPreset:
@@ -294,33 +166,23 @@ storegateway:
     operator: Equal
     value: "management"
     effect: NoSchedule
-
   priorityClassName: "system-cluster-critical"
-
-  securityContext:
-    enabled: true
-    fsGroup: 1001
-    runAsUser: 1001
-
   resources:
     limits:
       memory: 128Mi
     requests:
       cpu: 100m
       memory: 128Mi
-
   persistence:
     enabled: true
     storageClass: gp3
     size: 8Gi
-
   autoscaling:
     enabled: true
     minReplicas: 1
     maxReplicas: 10
     targetCPU: 50
     targetMemory: 50
-
   pdb:
     create: true
     minAvailable: 1
@@ -329,62 +191,32 @@ storegateway:
 ruler:
   enabled: true
   replicaLabel: replica
-
   serviceAccount:
     annotations:
       eks.amazonaws.com/role-arn: IAM_ROLE_ARN
     existingServiceAccount: SERVICE_ACCOUNT
-
   dnsDiscovery:
     enabled: true
-
   alertmanagers:
     - http://ALERT_MANAGER_URL:9093
-
-  ## Used to set the 'ruler_cluster' label
-  # clusterName:
-
-  ## Extra environment variable(s) to set on ruler container.
-  ##
-  ## extraEnv:
-  ## - name: VARNAME1
-  ##   value: value1
-  ## - name: VARNAME2
-  ##   valueFrom:
-  ##     secretKeyRef:
-  ##       name: existing-secret
-  ##       key: varname2-key
-  ##
-  extraEnv: []
-  extraFlags: []
-
   config: |-
     groups:
       - name: "metamonitoring"
         rules:
           - alert: "PrometheusDown"
             expr: absent(up{prometheus="PROMETHEUS_NAMESPACE/PROMETHEUS_SERVICE"})
-
   podAntiAffinityPreset: soft
   nodeAffinityPreset:
     type: "soft"
     key: "role"
     values:
       - management
-
   tolerations:
   - key: dedicated
     operator: Equal
     value: "management"
     effect: NoSchedule
-
   priorityClassName: "system-cluster-critical"
-
-  securityContext:
-    enabled: true
-    fsGroup: 1001
-    runAsUser: 1001
-
   resources:
     limits: {}
     #   cpu: 100m
@@ -392,27 +224,19 @@ ruler:
     requests: {}
     #   cpu: 100m
     #   memory: 128Mi
-
   persistence:
     enabled: true
     storageClass: gp3
     size: 8Gi
-
   pdb:
     create: true
     minAvailable: 1
 
 metrics:
   enabled: true
-
   serviceMonitor:
     enabled: true
     namespace: PROMETHEUS_NAMESPACE
 
-## Init Container parameters
-## Change the owner and group of the persistent volume(s) mountpoint(s) to 'runAsUser:fsGroup' on each component
-## values from the securityContext section of the component
-##
 volumePermissions:
-  enabled: false
-  image: {}
+  enabled: true
