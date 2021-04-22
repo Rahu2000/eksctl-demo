@@ -20,7 +20,7 @@ export IAM_POLICY_NAME="AmazonEKS_Prometheus_Thanos_Policy"
 export IAM_ROLE_NAME="AmazonEKS_Prometheus_Thanos_Role"
 export SERVICE_ACCOUNT="kube-prometheus.prometheus"
 export NAMESPACE="monitoring"
-export CHART_VERSION="4.2.1"
+export CHART_VERSION="4.2.2"
 export METRIC_CHART_VERSION="1.2.4"
 export REGION="ap-northeast-2"
 export THANOS_SIDECAR="true" # [true|false]
@@ -39,6 +39,8 @@ IAM_POLICY_ARN=""
 ##############################################################
 if [ "delete" == "$1" ]; then
   helm delete ${RELEASE_NAME} --namespace ${NAMESPACE}
+
+  helm delete ${METRIC_RELEASE_NAME} --namespace ${NAMESPACE}
 
   kubectl delete ns ${NAMESPACE}
 

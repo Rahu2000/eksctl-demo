@@ -3,10 +3,3 @@ config:
   bucket: BUCKET_NAME
   endpoint: s3.REGION.amazonaws.com
   region: REGION
-  # access_key: XXX
-  # secret_key: XXX
-  # insecure: false
-  # sse_config:
-  #   type: SSE-S3 # [SSE-S3|SSE-KMS|SSE-C]
-  #   # kms_key_id: "" # required with SSE-KMS
-  #   # encryption_key: "" # required with SSE-C
