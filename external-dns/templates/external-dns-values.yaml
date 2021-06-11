@@ -28,7 +28,6 @@ txtOwnerId: "HOSTZONEID"
 
 replicas: 1
 
-podAffinityPreset: "soft"
 podAntiAffinityPreset: "soft"
 
 nodeAffinityPreset:
