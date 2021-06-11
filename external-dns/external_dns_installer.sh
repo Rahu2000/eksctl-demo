@@ -1,0 +1,53 @@
+##############################################################
+# EXTERNAL DNS INSTALLER
+#
+# Required tools
+# - helm v3+
+# - jq 1.6+
+# - kubectl 1.16+
+#
+# Tested version
+#   EKS v1.19
+#   chart: bitnami/external-dns/5.0.3 (0.8.0)
+##############################################################
+#!/bin/bash
+export CLUSTER_NAME="eksworkshop"
+export IAM_POLICY_NAME="AmazonEKS_External_DNS_Route53_Policy"
+export IAM_ROLE_NAME="AmazonEKS_External_DNS_Route53_Role"
+export NAMESPACE="external-dns"
+export SERVICE_ACCOUNT="external-dns"
+export CHART_VERSION="5.0.3"
+export REGION="ap-northeast-2"
+
+source ../common/utils.sh
+
+##############################################################
+# Create IAM Role and ServiceAccount
+##############################################################
+## create a policy
+IAM_POLICY_ARN=$(aws iam list-policies --scope Local 2> /dev/null | jq -c --arg policyname $IAM_POLICY_NAME '.Policies[] | select(.PolicyName == $policyname)' | jq -r '.Arn')
+if [ -z "$IAM_POLICY_ARN" ]; then
+  IAM_POLICY_ARN=$(aws iam create-policy --policy-name ${IAM_POLICY_NAME} --policy-document file://templates/route53-policy.json | jq -r .Policy.Arn)
+fi
+
+IAM_ROLE_ARN=$(createRole "$CLUSTER_NAME" "$NAMESPACE" "$SERVICE_ACCOUNT" "$IAM_ROLE_NAME" "$IAM_POLICY_ARN")
+
+##############################################################
+# Install External-DNS with Helm
+##############################################################
+LOCAL_OS_KERNEL="$(uname -a | awk -F ' ' ' {print $1} ')"
+
+## Add bitnami charts repo
+if [ -z "$(helm repo list | grep https://charts.bitnami.com/bitnami)" ]; then
+  helm repo add bitnami https://charts.bitnami.com/bitnami
+fi
+helm repo update
+
+if [ "Darwin" == "$LOCAL_OS_KERNEL" ]; then
+  sed -i.bak "s|IAM_ROLE_ARN|${IAM_ROLE_ARN}|g" ./templates/external-dns-values.yaml
+  sed -i '' "s|SERVICE_ACCOUNT|${SERVICE_ACCOUNT}|g" ./templates/external-dns-values.yaml
+else
+  IAM_ROLE_ARN=$(echo ${IAM_ROLE_ARN} | sed 's|\/|\\/|')
+  sed -i.bak "s/IAM_ROLE_ARN/${IAM_ROLE_ARN}/g" ./templates/external-dns-values.yaml
+  sed -i "s/SERVICE_ACCOUNT/${SERVICE_ACCOUNT}/g" ./templates/external-dns-values.yaml
+fi

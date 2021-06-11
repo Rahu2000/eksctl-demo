@@ -1,0 +1,328 @@
+# global:
+#   imageRegistry: myRegistryName
+#   imagePullSecrets:
+#     - myRegistryKeySecretName
+
+image: {}
+  # registry: docker.io
+  # repository: bitnami/external-dns
+  # tag: 0.8.0-debian-10-r26
+  # ## Specify a imagePullPolicy
+  # ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
+  # ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+  # ##
+  # pullPolicy: IfNotPresent
+  # ## Optionally specify an array of imagePullSecrets.
+  # ## Secrets must be manually created in the namespace.
+  # ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+  # ##
+  # # pullSecrets:
+  # #   - myRegistryKeySecretName
+
+# nameOverride:
+# fullnameOverride:
+
+## Deployment pod host aliases
+## https://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/
+##
+hostAliases: []
+
+## K8s resources type to be observed for new DNS entries by ExternalDNS
+##
+sources:
+  # - crd
+  - service
+  - ingress
+  # - contour-httpproxy
+
+## support
+## - alibabacloud, aws, azure, azure-private-dns, cloudflare, coredns, designate, digitalocean, google, hetzner, infoblox, linode, rfc2136, transip
+provider: aws
+
+## Flags related to processing sources
+## ref: https://github.com/kubernetes-sigs/external-dns/blob/master/pkg/apis/externaldns/types.go#L272
+##
+## Limit sources of endpoints to a specific namespace (default: all namespaces)
+##
+namespace: ""
+## Templated strings that are used to generate DNS names from sources that don't define a hostname themselves
+##
+fqdnTemplates: []
+## Combine FQDN template and annotations instead of overwriting
+##
+combineFQDNAnnotation: false
+## Ignore hostname annotation when generating DNS names, valid only when fqdn-template is set
+##
+ignoreHostnameAnnotation: false
+## Allow external-dns to publish DNS records for ClusterIP services
+##
+publishInternalServices: false
+## Allow external-dns to publish host-ip for headless services
+##
+publishHostIP: false
+serviceTypeFilter:
+  - ClusterIP
+  - NodePort
+  - LoadBalancer
+  - ExternalName
+
+aws:
+  # credentials:
+  #   secretKey: ""
+  #   accessKey: ""
+  #   ## pre external-dns 0.5.9 home dir should be `/root/.aws`
+  #   ##
+  #   mountPath: "/.aws"
+  #   ## Use an existing secret with key "credentials" defined.
+  #   ## This ignores aws.credentials.secretKey, and aws.credentials.accessKey
+  #   ##
+  #   # secretName:
+
+  region: "ap-northeast-2"
+  ## Zone Filter. Available values are: public, private
+  ##
+  zoneType: "public"
+  ## AWS Role to assume
+  ##
+  assumeRoleArn: ""
+  ## Maximum number of retries for AWS API calls before giving up.
+  ##
+  apiRetries: 3
+  ## Maximum number of changes that will be applied in each batch
+  ##
+  batchChangeSize: 1000
+  ## AWS Zone tags
+  ##
+  zoneTags: []
+
+  preferCNAME: "true"
+  evaluateTargetHealth: "true"
+
+## Limit possible target zones by domain suffixes (optional)
+##
+domainFilters: []
+## Exclude subdomains (optional)
+##
+excludeDomains: []
+## Filter target zones by zone domain (optional)
+##
+zoneNameFilters: []
+## Limit possible target zones by zone id (optional)
+##
+zoneIdFilters: []
+## Filter sources managed by external-dns via annotation using label selector semantics (optional)
+##
+annotationFilter: ""
+## When enabled, prints DNS record changes rather than actually performing them
+##
+dryRun: false
+## When enabled, triggers run loop on create/update/delete events (optional, in addition of regular interval)
+##
+triggerLoopOnEvent: false
+## Adjust the interval for DNS updates
+##
+interval: "1m"
+## Verbosity of the ExternalDNS logs. Available values are:
+## - panic, debug, info, warning, error, fatal, trace
+##
+logLevel: info
+## Formats of the ExternalDNS logs. Available values are:
+## - text, json
+##
+logFormat: text
+## Modify how DNS records are synchronized between sources and providers (options: create-only, sync, upsert-only)
+##
+policy: upsert-only
+## Registry Type. Available types are: txt, noop
+## ref: https://github.com/kubernetes-sigs/external-dns/blob/master/docs/proposal/registry.md
+##
+registry: "txt"
+## Prefix to create a TXT record with a name following the pattern prefix.<CNAME record> (Mutual exclusive with txt-suffix)
+##
+# txtPrefix: ""
+## Suffix to create a TXT record with a name following the pattern <CNAME record>.suffix (Mutual exclusive with txt-prefix)
+##
+# txtSuffix: ""
+
+## Registry Identifier
+## Currently supported by two registry types: txt and aws-sd.
+## But other registry types might be added in the future.
+##
+txtOwnerId: ""
+
+## This setting added for backward compatibility for
+## customers who already used bitnami/external-dns helm chart
+## to privision 'aws-sd' registry type.
+## Previously bitnami/external-dns helm chart did not pass
+## txtOwnerId value down to the external-dns application
+## so the app itself sets that value to be a string 'default'.
+## If existing customers force the actual txtOwnerId value to be
+## passed properly, their external-dns updates will stop working
+## because the owner's value for exting DNS records in
+## AWS Service Discovery would remain 'default'.
+## NOTE: It is up to the end user to update AWS Service Discovery
+## 'default' values in description fields to make it work with new
+## value passed as txtOwnerId when forceTxtOwnerId=true
+forceTxtOwnerId: false
+
+extraArgs: {}
+## Extra env. variable to set on external-dns container.
+##
+## extraEnv:
+## - name: VARNAME1
+##   value: value1
+## - name: VARNAME2
+##   valueFrom:
+##     secretKeyRef:
+##       name: existing-secret
+##       key: varname2-key
+##
+extraEnv: []
+
+replicas: 1
+
+podAffinityPreset: "soft"
+podAntiAffinityPreset: soft
+
+nodeAffinityPreset:
+  type: "soft"
+  key: "role"
+  values:
+    - management
+
+tolerations:
+  - key: dedicated
+    operator: Equal
+    value: "management"
+    effect: NoSchedule
+
+## Annotations for external-dns pods
+##
+podAnnotations: {}
+
+## Additional labels for the pod(s).
+##
+podLabels: {}
+
+priorityClassName: "system-cluster-critical"
+
+## Annotations for the secret
+##
+secretAnnotations: {}
+
+crd:
+  create: false
+  ## Change these to use an external DNSEndpoint CRD (E.g. from kubefed)
+  ##
+  apiversion: ""
+  kind: ""
+
+service:
+  enabled: true
+  type: ClusterIP
+  port: 7979
+  ## Specify the nodePort value for the LoadBalancer and NodePort service types for the client port
+  ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport
+  ##
+  # nodePort:
+  ## Static clusterIP or None for headless services
+  ##
+  # clusterIP: ""
+  ## External IP list to use with ClusterIP service type
+  ##
+  externalIPs: []
+  ## Use loadBalancerIP to request a specific static IP,
+  ## otherwise leave blank
+  ##
+  # loadBalancerIP:
+  ## Address that are allowed when svc is LoadBalancer
+  ##
+  loadBalancerSourceRanges: []
+  ## Provide any additional annotations which may be required. This can be used to
+  ## set the LoadBalancer service type to internal only.
+  ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#internal-load-balancer
+  ##
+  annotations: {}
+
+  ## Provide any additional labels which may be required. This can be used to
+  ## have external-dns show up in `kubectl cluster-info`
+  ##  kubernetes.io/cluster-service: "true"
+  ##  kubernetes.io/name: "external-dns"
+  ##
+  labels: {}
+
+serviceAccount:
+  create: true
+  name: SERVICE_ACCOUNT
+  annotations:
+    eks.amazonaws.com/role-arn: IAM_ROLE_ARN
+  automountServiceAccountToken: true
+
+rbac:
+  create: true
+  clusterRole: true
+  apiVersion: v1
+  pspEnabled: true
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: ["ALL"]
+
+podSecurityContext:
+  fsGroup: 1001
+  runAsUser: 1001
+  # runAsNonRoot: true
+
+resources:
+ limits:
+   memory: 50Mi
+ requests:
+   memory: 50Mi
+   cpu: 10m
+
+## Configure extra volumes
+##
+extraVolumes: []
+
+## Configure extra volumeMounts
+##
+extraVolumeMounts: []
+
+podDisruptionBudget:
+  minAvailable: 1
+
+## Prometheus Exporter / Metrics
+##
+metrics:
+  enabled: false
+  ## Metrics exporter pod Annotation and Labels
+  ##
+  # podAnnotations:
+  #   prometheus.io/scrape: "true"
+  #   prometheus.io/port: "7979"
+
+  ## Prometheus Operator ServiceMonitor configuration
+  ##
+  serviceMonitor:
+    enabled: false
+    ## Namespace in which Prometheus is running
+    ##
+    # namespace: monitoring
+
+    ## Interval at which metrics should be scraped.
+    ## ref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#endpoint
+    ##
+    # interval: 10s
+
+    ## Timeout after which the scrape is ended
+    ## ref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#endpoint
+    ##
+    # scrapeTimeout: 10s
+
+    ## ServiceMonitor selector labels
+    ## ref: https://github.com/bitnami/charts/tree/master/bitnami/prometheus-operator#prometheus-configuration
+    ##
+    # selector:
+    #   prometheus: my-prometheus
