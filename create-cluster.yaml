@@ -4,7 +4,7 @@ kind: ClusterConfig
 metadata:
   name: eksworkshop
   region: ap-northeast-2
-  version: "1.19"
+  version: "1.20"
   tags:
     env: dev
 
@@ -259,3 +259,10 @@ nodeGroups:
 #       - "jq -c '. + { \"imageGCHighThresholdPercent\": 80 }' /etc/kubernetes/kubelet/kubelet-config.json > tmp.$$.json && mv tmp.$$.json /etc/kubernetes/kubelet/kubelet-config.json"
 #       - "jq -c '. + { \"imageGCLowThresholdPercent\": 70 }' /etc/kubernetes/kubelet/kubelet-config.json > tmp.$$.json && mv tmp.$$.json /etc/kubernetes/kubelet/kubelet-config.json"
 #       - "sed -i '/^KUBELET_EXTRA_ARGS=/a KUBELET_EXTRA_ARGS+=\" --feature-gates=CSIMigrationAWS=true \"' /etc/eks/bootstrap.sh"
+
+fargateProfiles:
+  - name: coredns
+    selectors:
+      - namespace: kube-system
+        labels:
+          k8s-app: kube-dns

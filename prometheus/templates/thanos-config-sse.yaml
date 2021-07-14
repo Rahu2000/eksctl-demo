@@ -1,0 +1,8 @@
+type: S3
+config:
+  bucket: BUCKET_NAME
+  endpoint: s3.REGION.amazonaws.com
+  region: REGION
+  insecure: false
+  sse_config:
+    type: SSE-S3

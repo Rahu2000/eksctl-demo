@@ -15,6 +15,7 @@
 export METRICS_VERSION="5.7.1"
 export NAMESPACE="kube-system"
 export SUM_PODS_AND_SERVICES=6000
+export COREDNS_FARGATE=false
 
 # MB required (w/ autopath) = (Pods + Services) / 250 + 56
 calculate_memory () {
@@ -26,12 +27,17 @@ LOCAL_OS_KERNEL="$(uname -a | awk -F ' ' ' {print $1} ')"
 
 ## Patch deployments/coredns
 ## Notice: should be replace tolerations values
-kubectl get deployments/coredns -n ${NAMESPACE} -ojson | jq '.spec.template.spec.tolerations +=  [{"key":"dedicated","operator":"Equal","value":"management","effect":"NoSchedule"}]' | jq '.spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions +=  [{"key":"role","operator":"In","values":["management"]}]' | kubectl apply -f -
+if "$COREDNS_FARGATE"; then
+  kubectl get deployments/coredns -n ${NAMESPACE} -ojson | jq '.spec.template.metadata.annotations."eks.amazonaws.com/compute-type" = "fargate"' | kubectl apply -f -
+else
+   kubectl get deployments/coredns -n ${NAMESPACE} -ojson | jq '.spec.template.spec.tolerations +=  [{"key":"dedicated","operator":"Equal","value":"management","effect":"NoSchedule"}]' | jq '.spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions +=  [{"key":"role","operator":"In","values":["management"]}]' | kubectl apply -f -
 
-kubectl rollout restart deployments/coredns -n ${NAMESPACE}
+  kubectl rollout restart deployments/coredns -n ${NAMESPACE}
 
-## Add coredns PodDisruptionBudget
-kubectl apply -f ./templates/coredns-pdb.yaml
+  ## Add coredns PodDisruptionBudget
+  kubectl apply -f ./templates/coredns-pdb.yaml
+fi
+
 
 ## Add the bitnami Helm repository
 if [ -z "$(helm repo list | grep https://charts.bitnami.com/bitnami)" ]; then
