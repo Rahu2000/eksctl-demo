@@ -68,7 +68,7 @@ ingressShim: {}
 
 # Prometheus service monitoring setup
 prometheus:
-  enabled: true
+  enabled: false
   servicemonitor:
     enabled: true
     prometheusInstance: default
@@ -197,11 +197,7 @@ cainjector:
               operator: In
               values:
               - cainjector
-          topologyKey:
-            - "kubernetes.io/hostname"
-            - "topology.kubernetes.io/zone"
-            - "topology.kubernetes.io/region"
-            - "*"
+          topologyKey: topology.kubernetes.io/zone
 
   tolerations:
     - key: dedicated

@@ -3,7 +3,7 @@
 #
 # Required tools
 # - helm v3+
-# - yq 2.12.0+
+# - yq 4.11+ (not python-yq)
 # - jq 1.6+
 # - curl
 # - kubectl 1.16+
@@ -18,9 +18,9 @@
 export CLUSTER_NAME="eksworkshop"
 export IAM_POLICY_NAME="AmazonEKS_Load_Balancer_Controller_Policy"
 export IAM_ROLE_NAME="AmazonEKS_Load_Balancer_Controller_Role"
-export CERT_MANGER_VERSION="v1.0.2"
-export ALB_CONTROLLER_VERSION="v2.1.3"
-export ALB_CONTROLLER_FILE="v2_1_3"
+export CERT_MANGER_VERSION="v1.3.1"
+export ALB_CONTROLLER_VERSION="v2.2.1"
+export ALB_CONTROLLER_FILE="v2_2_1"
 export SERVICE_ACCOUNT="aws-load-balancer-controller"
 export NAMESPACE="kube-system"
 export REGION="ap-northeast-2"
@@ -132,7 +132,7 @@ ARG2="--aws-region=$REGION"
 ## NOTICE: you should be modify some values in spec.yaml
 ## - affinity
 ## - tolerations
-SPEC=$(cat ./templates/spec.yaml | yq | jq -r -c )
+SPEC=$(cat ./templates/spec.yaml | yq eval -j | jq -r -c )
 
 ## Patch deployments/aws-load-balancer-controller
 kubectl get deployments/aws-load-balancer-controller -n kube-system -ojson | jq --arg vpc "${ARG1}" --arg region "${ARG2}" '.spec.template.spec.containers[0].args |= . + [$vpc,$region]' | jq --argjson spec "${SPEC}" '.spec.template.spec +=  $spec' | kubectl apply -f -

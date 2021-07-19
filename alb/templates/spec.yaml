@@ -15,11 +15,7 @@ affinity:
               operator: In
               values:
                 - aws-load-balancer-controller
-        topologyKey:
-          - "kubernetes.io/hostname"
-          - "topology.kubernetes.io/zone"
-          - "topology.kubernetes.io/region"
-          - "*"
+        topologyKey: kubernetes.io/hostname
 tolerations:
   - key: dedicated
     operator: Equal
