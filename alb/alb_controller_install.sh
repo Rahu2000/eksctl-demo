@@ -10,22 +10,30 @@
 # - gnu-sed
 #
 # Tested version
-#   EKS v1.19
-#   cert-manager v1.0.2
-#   aws-load-balancer-controller v2.1.3
+#   v0.1
+#     EKS v1.19
+#     cert-manager v1.0.2
+#     aws-load-balancer-controller v2.1.3
+#   v0.2
+#     EKS v1.21
+#     cert-manager v1.3.1
+#     aws-load-balancer-controller v2.2.1 (chart: 1.2.3)
 ##############################################################
 #!/bin/bash
 export CLUSTER_NAME="eksworkshop"
+export RELEASE_NAME="aws-load-balance-controller"
 export IAM_POLICY_NAME="AmazonEKS_Load_Balancer_Controller_Policy"
 export IAM_ROLE_NAME="AmazonEKS_Load_Balancer_Controller_Role"
-export CERT_MANGER_VERSION="v1.3.1"
-export ALB_CONTROLLER_VERSION="v2.2.1"
-export ALB_CONTROLLER_FILE="v2_2_1"
+export ALBC_CHART_VERSION="1.2.3"
 export SERVICE_ACCOUNT="aws-load-balancer-controller"
 export NAMESPACE="kube-system"
 export REGION="ap-northeast-2"
+export REPLIACS=2
+export ENABLE_CERT_MANAGER=true
+export CERT_MANGER_VERSION="v1.3.1"
 export CERT_NAMESPACE="cert-manager"
 export CERT_RELEASE_NAME="cert-manager"
+export ENABLE_PROMETHUES_MONITORING=false
 
 source ../common/utils.sh
 
@@ -33,61 +41,70 @@ source ../common/utils.sh
 # Delete release
 ##############################################################
 if [ "delete" == "$1" ]; then
-  kubectl delete --ignore-not-found pdb/aws-load-balancer-controller-pdb --namespace ${NAMESPACE}
-  kubectl delete -f "${ALB_CONTROLLER_FILE}_full.yaml" --namespace ${NAMESPACE}
-
+  helm delete ${RELEASE_NAME} --namespace ${NAMESPACE}
   kubectl delete --ignore-not-found cm/aws-load-balancer-controller-leader --namespace ${NAMESPACE}
 
-  helm delete ${CERT_RELEASE_NAME} --namespace ${CERT_NAMESPACE}
+  if "$ENABLE_CERT_MANAGER"; then
+    helm delete ${CERT_RELEASE_NAME} --namespace ${CERT_NAMESPACE}
+    kubectl delete --ignore-not-found cm/cert-manager-cainjector-leader-election --namespace ${NAMESPACE}
+    kubectl delete --ignore-not-found cm/cert-manager-cainjector-leader-election-core --namespace ${NAMESPACE}
+    kubectl delete --ignore-not-found cm/cert-manager-controller --namespace ${NAMESPACE}
+    kubectl delete ns ${CERT_NAMESPACE}
 
-  kubectl delete --ignore-not-found cm/cert-manager-cainjector-leader-election --namespace ${NAMESPACE}
-  kubectl delete --ignore-not-found cm/cert-manager-cainjector-leader-election-core --namespace ${NAMESPACE}
-  kubectl delete --ignore-not-found cm/cert-manager-controller --namespace ${NAMESPACE}
-  kubectl delete ns ${CERT_NAMESPACE}
-
-  kubectl delete --ignore-not-found customresourcedefinitions\
-    certificaterequests.cert-manager.io\
-    certificates.cert-manager.io\
-    challenges.acme.cert-manager.io\
-    clusterissuers.cert-manager.io\
-    issuers.cert-manager.io\
-    orders.acme.cert-manager.io
+    kubectl delete --ignore-not-found customresourcedefinitions\
+      certificaterequests.cert-manager.io\
+      certificates.cert-manager.io\
+      challenges.acme.cert-manager.io\
+      clusterissuers.cert-manager.io\
+      issuers.cert-manager.io\
+      orders.acme.cert-manager.io
+  fi
   exit 0
 fi
+
+DIR=(`date "+%Y-%m-%d-%H%M%S"`)
+mkdir -p /tmp/$DIR
+cp ./templates/*.values.yaml /tmp/${DIR}/
 
 LOCAL_OS_KERNEL="$(uname -a | awk -F ' ' ' {print $1} ')"
 ##############################################################
 # Install the cert-manager
 ##############################################################
 ## Install the cert-manager CRD
-kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/"${CERT_MANGER_VERSION}"/cert-manager.crds.yaml
+if "$ENABLE_CERT_MANAGER"; then
+  kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/"${CERT_MANGER_VERSION}"/cert-manager.crds.yaml
 
-## Add the Jetstack Helm repository
-if [ -z "$(helm repo list | grep https://charts.jetstack.io)" ]; then
-  helm repo add jetstack https://charts.jetstack.io
+  ## Add the Jetstack Helm repository
+  if [ -z "$(helm repo list | grep https://charts.jetstack.io)" ]; then
+    helm repo add jetstack https://charts.jetstack.io
+  fi
+  helm repo update
+
+  if [ "Darwin" == "$LOCAL_OS_KERNEL" ]; then
+    sed -i.bak "s|CERT_MANGER_VERSION|${CERT_MANGER_VERSION}|g" /tmp/${DIR}/cert-manager.values.yaml
+    sed -i '' "s|ENABLE_PROMETHUES_MONITORING|${ENABLE_PROMETHUES_MONITORING}|g" /tmp/${DIR}/cert-manager.values.yaml
+  else
+    sed -i.bak "s/CERT_MANGER_VERSION/${CERT_MANGER_VERSION}/g" /tmp/${DIR}/cert-manager.values.yaml
+    sed -i "s/ENABLE_PROMETHUES_MONITORING/${ENABLE_PROMETHUES_MONITORING}/g" /tmp/${DIR}/cert-manager.values.yaml
+  fi
+
+  ## Install the cert-manager helm chart
+  helm upgrade --install \
+    ${CERT_RELEASE_NAME} jetstack/cert-manager \
+    --namespace ${CERT_NAMESPACE} \
+    --version "${CERT_MANGER_VERSION}" \
+    --create-namespace \
+    -f /tmp/${DIR}/cert-manager.values.yaml \
+    --wait
 fi
-helm repo update
-
-if [ "Darwin" == "$LOCAL_OS_KERNEL" ]; then
-  sed -i.bak "s|CERT_MANGER_VERSION|${CERT_MANGER_VERSION}|g" ./templates/cert-manager.value.yaml
-else
-  sed -i.bak "s/CERT_MANGER_VERSION/${CERT_MANGER_VERSION}/g" ./templates/cert-manager.value.yaml
-fi
-
-## Install the cert-manager helm chart
-helm upgrade --install \
-  ${CERT_RELEASE_NAME} jetstack/cert-manager \
-  --namespace ${CERT_NAMESPACE} \
-  --version "${CERT_MANGER_VERSION}" \
-  --create-namespace \
-  -f ./templates/cert-manager.value.yaml \
-  --wait
 
 ##############################################################
 # Create IAM Role for a aws-load-balancer-controller ServiceAccount
 ##############################################################
 ## download a latest policy for Aws Load Balancer controller from kubernetes-sigs
-curl -o iam_policy.json https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/"${ALB_CONTROLLER_VERSION}"/docs/install/iam_policy.json
+# curl -o iam_policy.json https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/"${ALB_CONTROLLER_VERSION}"/docs/install/iam_policy.json
+curl -o iam_policy.json https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/main/docs/install/iam_policy.json
+
 
 ## create a policy
 IAM_POLICY_ARN=$(aws iam list-policies --scope Local 2> /dev/null | jq -c --arg policyname $IAM_POLICY_NAME '.Policies[] | select(.PolicyName == $policyname)' | jq -r '.Arn')
@@ -100,42 +117,38 @@ IAM_ROLE_ARN=$(createRole "$CLUSTER_NAME" "$NAMESPACE" "$SERVICE_ACCOUNT" "$IAM_
 ##############################################################
 # Install the aws-load-balancer-controller
 ##############################################################
-## Manifest download
-curl -o "${ALB_CONTROLLER_FILE}_full.yaml" https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/"${ALB_CONTROLLER_VERSION}"/docs/install/"${ALB_CONTROLLER_FILE}_full.yaml"
+## Add the Jetstack Helm repository
+if [ -z "$(helm repo list | grep https://aws.github.io/eks-charts)" ]; then
+  helm repo add eks https://aws.github.io/eks-charts
+fi
+helm repo update
 
-SA_LINE_NUM=$(grep -n "^kind: ServiceAccount" "${ALB_CONTROLLER_FILE}_full.yaml"|awk -F ':' ' { print$1 } ')
-let "SA_LINE_NUM+=1"
+VPC_ID="$(aws eks describe-cluster --name $CLUSTER_NAME --region $REGION | jq -r .cluster.resourcesVpcConfig.vpcId)"
 
 # Modify cluster name and resource.requests.memory (to avoid OOM)
 if [ "Darwin" == "$LOCAL_OS_KERNEL" ]; then
-  gsed -i "${SA_LINE_NUM} a XXXXeks.amazonaws.com/role-arn: ${IAM_ROLE_ARN}" "${ALB_CONTROLLER_FILE}_full.yaml"
-  gsed -i "${SA_LINE_NUM} a XXannotations:" "${ALB_CONTROLLER_FILE}_full.yaml"
-  gsed -i 's/XX/  /g' "${ALB_CONTROLLER_FILE}_full.yaml"
-  sed -i '' "s|your-cluster-name|${CLUSTER_NAME}|g" "${ALB_CONTROLLER_FILE}_full.yaml"
-  # sed -i '' "s|200Mi|500Mi|g" "${ALB_CONTROLLER_FILE}_full.yaml"
+  sed -i.bak "s|REPLIACS|${REPLIACS}|g" /tmp/${DIR}/alb-controller.values.yaml
+  sed -i '' "s|CLUSTER_NAME|${CLUSTER_NAME}|g" /tmp/${DIR}/alb-controller.values.yaml
+  sed -i '' "s|IAM_ROLE_ARN|${IAM_ROLE_ARN}|g" /tmp/${DIR}/alb-controller.values.yaml
+  sed -i '' "s|SERVICE_ACCOUNT|${SERVICE_ACCOUNT}|g" /tmp/${DIR}/alb-controller.values.yaml
+  sed -i '' "s|REGION|${REGION}|g" /tmp/${DIR}/alb-controller.values.yaml
+  sed -i '' "s|VPC_ID|${VPC_ID}|g" /tmp/${DIR}/alb-controller.values.yaml
+  sed -i '' "s|ENABLE_CERT_MANAGER|${ENABLE_CERT_MANAGER}|g" /tmp/${DIR}/alb-controller.values.yaml
 else
-  sed -i "${SA_LINE_NUM} a XXXXeks.amazonaws.com/role-arn: ${IAM_ROLE_ARN}" "${ALB_CONTROLLER_FILE}_full.yaml"
-  sed -i "${SA_LINE_NUM} a XXannotations:" "${ALB_CONTROLLER_FILE}_full.yaml"
-  sed -i 's/XX/  /g' "${ALB_CONTROLLER_FILE}_full.yaml"
-  sed -i "s/your-cluster-name/${CLUSTER_NAME}/g" "${ALB_CONTROLLER_FILE}_full.yaml"
-  # sed -i '' "s/200Mi/500Mi/g" "${ALB_CONTROLLER_FILE}_full.yaml"
+  IAM_ROLE_ARN=$(echo ${IAM_ROLE_ARN} | sed 's|\/|\\/|')
+  sed -i "s/REPLIACS/REPLIACS/g" /tmp/${DIR}/alb-controller.values.yaml
+  sed -i "s/CLUSTER_NAME/${CLUSTER_NAME}/g" /tmp/${DIR}/alb-controller.values.yaml
+  sed -i "s/IAM_ROLE_ARN/${IAM_ROLE_ARN}/g" /tmp/${DIR}/alb-controller.values.yaml
+  sed -i "s/SERVICE_ACCOUNT/${SERVICE_ACCOUNT}/g" /tmp/${DIR}/alb-controller.values.yaml
+  sed -i "s/REGION/${REGION}/g" /tmp/${DIR}/alb-controller.values.yaml
+  sed -i "s/VPC_ID/${VPC_ID}/g" /tmp/${DIR}/alb-controller.values.yaml
+  sed -i "s/ENABLE_CERT_MANAGER/${ENABLE_CERT_MANAGER}/g" /tmp/${DIR}/alb-controller.values.yaml
 fi
 
-## install aws-load-balance-controller
-kubectl apply --validate=false -f "${ALB_CONTROLLER_FILE}_full.yaml"
-
-## Patch spec
-ARG1="--aws-vpc-id=$(aws eks describe-cluster --name $CLUSTER_NAME --region $REGION | jq -r .cluster.resourcesVpcConfig.vpcId)"
-ARG2="--aws-region=$REGION"
-
-## add affinity, tolerantions, priorityClassName and apply
-## NOTICE: you should be modify some values in spec.yaml
-## - affinity
-## - tolerations
-SPEC=$(cat ./templates/spec.yaml | yq eval -j | jq -r -c )
-
-## Patch deployments/aws-load-balancer-controller
-kubectl get deployments/aws-load-balancer-controller -n kube-system -ojson | jq --arg vpc "${ARG1}" --arg region "${ARG2}" '.spec.template.spec.containers[0].args |= . + [$vpc,$region]' | jq --argjson spec "${SPEC}" '.spec.template.spec +=  $spec' | kubectl apply -f -
-
-## Add PodDisruptionBudget
-kubectl apply -f ./templates/alb-controller-pdb.yaml
+## Install the aws-load-balance-controller helm chart
+helm upgrade --install \
+  ${RELEASE_NAME} eks/aws-load-balancer-controller \
+  --namespace ${NAMESPACE} \
+  --version "${ALBC_CHART_VERSION}" \
+  -f /tmp/${DIR}/alb-controller.values.yaml \
+  --wait

@@ -1,0 +1,50 @@
+replicaCount: REPLIACS
+
+clusterName: CLUSTER_NAME
+
+serviceAccount:
+  create: true
+  annotations:
+    eks.amazonaws.com/role-arn: IAM_ROLE_ARN
+  name: SERVICE_ACCOUNT
+  automountServiceAccountToken: true
+
+resources: {}
+  # limits:
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+tolerations: []
+  # - key: dedicated
+  #   operator: Equal
+  #   value: "management"
+  #   effect: NoSchedule
+
+affinity:
+  # nodeAffinity:
+  #   requiredDuringSchedulingIgnoredDuringExecution:
+  #     nodeSelectorTerms:
+  #       - matchExpressions:
+  #           - key: role
+  #             operator: In
+  #             values:
+  #               - management
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+            - key: k8s-app
+              operator: In
+              values:
+                - aws-load-balancer-controller
+        topologyKey: kubernetes.io/hostname
+
+region: REGION
+vpcId: VPC_ID
+
+enableCertManager: ENABLE_CERT_MANAGER
+
+podDisruptionBudget:
+  maxUnavailable: 1
