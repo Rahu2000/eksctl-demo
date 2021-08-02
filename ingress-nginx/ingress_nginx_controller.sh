@@ -3,7 +3,6 @@
 #
 # Required tools
 # - helm v3+
-# - jq 1.6+
 # - kubectl 1.16+
 #
 # Tested version
@@ -23,9 +22,7 @@ export INTERNAL=true
 ##############################################################
 if [ "delete" == "$1" ]; then
   helm delete ${RELEASE_NAME} --namespace ${NAMESPACE}
-
   kubectl delete ns ${NAMESPACE}
-
   exit 0
 fi
 
