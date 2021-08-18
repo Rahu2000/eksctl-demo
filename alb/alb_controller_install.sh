@@ -136,7 +136,7 @@ if [ "Darwin" == "$LOCAL_OS_KERNEL" ]; then
   sed -i '' "s|ENABLE_CERT_MANAGER|${ENABLE_CERT_MANAGER}|g" /tmp/${DIR}/alb-controller.values.yaml
 else
   IAM_ROLE_ARN=$(echo ${IAM_ROLE_ARN} | sed 's|\/|\\/|')
-  sed -i "s/REPLIACS/REPLIACS/g" /tmp/${DIR}/alb-controller.values.yaml
+  sed -i "s/REPLIACS/${REPLIACS}/g" /tmp/${DIR}/alb-controller.values.yaml
   sed -i "s/CLUSTER_NAME/${CLUSTER_NAME}/g" /tmp/${DIR}/alb-controller.values.yaml
   sed -i "s/IAM_ROLE_ARN/${IAM_ROLE_ARN}/g" /tmp/${DIR}/alb-controller.values.yaml
   sed -i "s/SERVICE_ACCOUNT/${SERVICE_ACCOUNT}/g" /tmp/${DIR}/alb-controller.values.yaml
