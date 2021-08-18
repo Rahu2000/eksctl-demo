@@ -7,8 +7,10 @@
 # - kubectl 1.16+
 #
 # Tested version
-#   EKS v1.19
+# - EKS v1.19
 #   chart: aws-ebs-csi 0.9.8 (0.9.0)
+# - EKS v1.21
+#   chart: aws-ebs-csi 1.2.4 (1.1.1)
 ##############################################################
 #!/bin/bash
 export CLUSTER_NAME="eksworkshop"
@@ -19,7 +21,7 @@ export SNAPSHOT_ENABLE="true" # [true|false]
 export SNAPSHOT_IAM_ROLE_NAME="AmazonEKS_EBS_CSI_Driver_Role_For_Snapshot"
 export SNAPSHOT_SERVICE_ACCOUNT="ebs-csi-snapshot"
 export NAMESPACE="kube-system"
-export CHART_VERSION="0.9.8"
+export CHART_VERSION="1.2.4"
 export REGION="ap-northeast-2"
 export RELEASE_NAME="aws-ebs-csi-driver"
 
@@ -40,6 +42,10 @@ if [ "delete" == "$1" ]; then
     volumesnapshots.snapshot.storage.k8s.io
   exit 0
 fi
+
+DIR=(`date "+%Y-%m-%d-%H%M%S"`)
+mkdir -p /tmp/$DIR
+cp ./templates/*.yaml /tmp/${DIR}/
 
 ##############################################################
 # Create IAM Role and ServiceAccount
@@ -83,26 +89,26 @@ fi
 helm repo update
 
 if [ "Darwin" == "$LOCAL_OS_KERNEL" ]; then
-  sed -i.bak "s|REGION|${REGION}|g" ./templates/ebs-csi-driver.values.yaml
-  sed -i '' "s|CONTROLLER_SERVICE_ACCOUNT|${CONTROLLER_SERVICE_ACCOUNT}|g" ./templates/ebs-csi-driver.values.yaml
-  sed -i '' "s|CONTROLLER_IAM_ROLE_ARN|${CONTROLLER_IAM_ROLE_ARN}|g" ./templates/ebs-csi-driver.values.yaml
+  sed -i.bak "s|REGION|${REGION}|g" /tmp/${DIR}/ebs-csi-driver.values.yaml
+  sed -i '' "s|CONTROLLER_SERVICE_ACCOUNT|${CONTROLLER_SERVICE_ACCOUNT}|g" /tmp/${DIR}/ebs-csi-driver.values.yaml
+  sed -i '' "s|CONTROLLER_IAM_ROLE_ARN|${CONTROLLER_IAM_ROLE_ARN}|g" /tmp/${DIR}/ebs-csi-driver.values.yaml
+  sed -i '' "s|SNAPSHOT_ENABLE|${SNAPSHOT_ENABLE}|g" /tmp/${DIR}/ebs-csi-driver.values.yaml
 else
   CONTROLLER_IAM_ROLE_ARN=$(echo ${CONTROLLER_IAM_ROLE_ARN} | sed 's|\/|\\/|')
-  sed -i.bak "s/REGION/${REGION}/g" ./templates/ebs-csi-driver.values.yaml
-  sed -i "s/CONTROLLER_SERVICE_ACCOUNT/${CONTROLLER_SERVICE_ACCOUNT}/g" ./templates/ebs-csi-driver.values.yaml
-  sed -i "s/CONTROLLER_IAM_ROLE_ARN/${CONTROLLER_IAM_ROLE_ARN}/g" ./templates/ebs-csi-driver.values.yaml
+  sed -i.bak "s/REGION/${REGION}/g" /tmp/${DIR}/ebs-csi-driver.values.yaml
+  sed -i "s/CONTROLLER_SERVICE_ACCOUNT/${CONTROLLER_SERVICE_ACCOUNT}/g" /tmp/${DIR}/ebs-csi-driver.values.yaml
+  sed -i "s/CONTROLLER_IAM_ROLE_ARN/${CONTROLLER_IAM_ROLE_ARN}/g" /tmp/${DIR}/ebs-csi-driver.values.yaml
+  sed -i "s/SNAPSHOT_ENABLE/${SNAPSHOT_ENABLE}/g" /tmp/${DIR}/ebs-csi-driver.values.yaml
 fi
 
 if [[  "true" == $SNAPSHOT_ENABLE ]]; then
   if [ "Darwin" == "$LOCAL_OS_KERNEL" ]; then
-    sed -i '' "s|SNAPSHOT_ENABLE|${SNAPSHOT_ENABLE}|g" ./templates/ebs-csi-driver.values.yaml
-    sed -i '' "s|SNAPSHOT_SERVICE_ACCOUNT|${SNAPSHOT_SERVICE_ACCOUNT}|g" ./templates/ebs-csi-driver.values.yaml
-    sed -i '' "s|SNAPSHOT_IAM_ROLE_ARN|${SNAPSHOT_IAM_ROLE_ARN}|g" ./templates/ebs-csi-driver.values.yaml
+    sed -i '' "s|SNAPSHOT_SERVICE_ACCOUNT|${SNAPSHOT_SERVICE_ACCOUNT}|g" /tmp/${DIR}/ebs-csi-driver.values.yaml
+    sed -i '' "s|SNAPSHOT_IAM_ROLE_ARN|${SNAPSHOT_IAM_ROLE_ARN}|g" /tmp/${DIR}/ebs-csi-driver.values.yaml
   else
     SNAPSHOT_IAM_ROLE_ARN=$(echo ${SNAPSHOT_IAM_ROLE_ARN} | sed 's|\/|\\/|')
-    sed -i "s/SNAPSHOT_ENABLE/${SNAPSHOT_ENABLE}/g" ./templates/ebs-csi-driver.values.yaml
-    sed -i "s/SNAPSHOT_SERVICE_ACCOUNT/${SNAPSHOT_SERVICE_ACCOUNT}/g" ./templates/ebs-csi-driver.values.yaml
-    sed -i "s/SNAPSHOT_IAM_ROLE_ARN/${SNAPSHOT_IAM_ROLE_ARN}/g" ./templates/ebs-csi-driver.values.yaml
+    sed -i "s/SNAPSHOT_SERVICE_ACCOUNT/${SNAPSHOT_SERVICE_ACCOUNT}/g" /tmp/${DIR}/ebs-csi-driver.values.yaml
+    sed -i "s/SNAPSHOT_IAM_ROLE_ARN/${SNAPSHOT_IAM_ROLE_ARN}/g" /tmp/${DIR}/ebs-csi-driver.values.yaml
   fi
 fi
 
@@ -110,7 +116,7 @@ helm upgrade --install ${RELEASE_NAME} \
   aws-ebs-csi-driver/aws-ebs-csi-driver \
   --version=${CHART_VERSION} \
   --namespace ${NAMESPACE} \
-  -f ./templates/ebs-csi-driver.values.yaml \
+  -f /tmp/${DIR}/ebs-csi-driver.values.yaml \
   --wait
 
 ##############################################################
@@ -119,23 +125,23 @@ helm upgrade --install ${RELEASE_NAME} \
 ## Remove in-tree gp2 driver and recreate
 if [[ "kubernetes.io/aws-ebs" == "$(kubectl get sc gp2 | grep gp2 | awk -F ' ' '{ print $3 }')" ]]; then
   kubectl delete sc gp2
-  kubectl apply -f ./templates/gp2-storage-class.yaml
+  kubectl apply -f /tmp/${DIR}/gp2-storage-class.yaml
 fi
 
 ## Add gp3 and io2 type StorageClass
-kubectl apply -f ./templates/added-storage-class.yaml
+kubectl apply -f /tmp/${DIR}/added-storage-class.yaml
 
 ##############################################################
 ## Create a EBS Volume Snapshot Class
 ##############################################################
 if [[  "true" == $SNAPSHOT_ENABLE ]]; then
-  kubectl apply -f ./templates/ebs-volume-snapshot-clsss.yaml
+  kubectl apply -f /tmp/${DIR}/ebs-volume-snapshot-clsss.yaml
 fi
 
 ##############################################################
 ## Create a PodDisruptionBudget
 ##############################################################
-kubectl apply -f ./templates/ebs-csi-controller-pdb.yaml
+kubectl apply -f /tmp/${DIR}/ebs-csi-controller-pdb.yaml
 if [[  "true" == $SNAPSHOT_ENABLE ]]; then
-  kubectl apply -f ./templates/ebs-snapshot-controller-pdb.yaml
+  kubectl apply -f /tmp/${DIR}/ebs-snapshot-controller-pdb.yaml
 fi
