@@ -1,0 +1,6 @@
+resources:
+- snapshot-controller.yaml
+- rbac-snapshot-controller.yaml
+patchesStrategicMerge:
+- snapshot-serviceaccount.yaml
+- snapshot-controller-patch.yaml

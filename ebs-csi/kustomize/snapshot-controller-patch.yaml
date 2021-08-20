@@ -1,0 +1,37 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: snapshot-controller
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      app: snapshot-controller
+  template:
+    spec:
+      containers:
+      - name: snapshot-controller
+        args:
+            - "--v=3"
+            - "--leader-election=true"
+      tolerations:
+      - key: dedicated
+        operator: Equal
+        value: "management"
+        effect: NoSchedule
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                - key: role
+                  operator: In
+                  values:
+                  - management
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway

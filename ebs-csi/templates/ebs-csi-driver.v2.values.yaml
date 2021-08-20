@@ -1,0 +1,93 @@
+---
+sidecars:
+  provisioner:
+    env: []
+    image: {}
+    logLevel: 2
+    resources: {}
+  attacher:
+    env: []
+    image: {}
+    logLevel: 2
+    resources: {}
+  snapshotter:
+    env: []
+    image: {}
+    logLevel: 2
+    resources: {}
+  livenessProbe:
+    image: {}
+    resources: {}
+  resizer:
+    env: []
+    image: {}
+    logLevel: 2
+    resources: {}
+  nodeDriverRegistrar:
+    env: []
+    image: {}
+    logLevel: 2
+    resources: {}
+
+controller:
+  # If arbitrary args like "--aws-sdk-debug-log=true" need to be passed, use this value
+  additionalArgs: []
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+            - key: role
+              operator: In
+              values:
+              - management
+  env: []
+  extraCreateMetadata: true
+  httpEndpoint:
+  # ID of the Kubernetes cluster used for tagging provisioned EBS volumes (optional).
+  k8sTagClusterId:
+  logLevel: 2
+  priorityClassName: system-cluster-critical
+  region: REGION
+  replicaCount: 2
+  resources: {}
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+  serviceAccount:
+    create: true
+    name: CONTROLLER_SERVICE_ACCOUNT
+    annotations:
+      eks.amazonaws.com/role-arn: CONTROLLER_IAM_ROLE_ARN
+  tolerations:
+  - key: dedicated
+    operator: Equal
+    value: "management"
+    effect: NoSchedule
+  topologySpreadConstraints: []
+
+node:
+  env: []
+  kubeletPath: /var/lib/kubelet
+  logLevel: 2
+  priorityClassName:
+  nodeSelector: {}
+  podAnnotations: {}
+  podLabels: {}
+  tolerateAllTaints: true
+  tolerations: []
+  resources: {}
+  serviceAccount:
+    create: true
+    name: ebs-csi-node-sa
+    annotations: {}
+  enableWindows: false
+  # The "maximum number of attachable volumes" per node
+  volumeAttachLimit: "39"
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: "10%"
