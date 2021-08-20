@@ -1,11 +1,4 @@
 ---
-image: {}
-  # repository: velero/velero
-  # tag: v1.5.3
-  # pullPolicy: IfNotPresent
-  # imagePullSecrets: []
-  # # - registrySecretName
-
 annotations: {}
 # secret.reloader.stakater.com/reload: "<VELERO_SECRET_NAME>"
 
@@ -42,7 +35,7 @@ initContainers:
 securityContext:
   fsGroup: 1337
 
-priorityClassName: "operational-critical"
+# priorityClassName: "operational-critical"
 
 tolerations:
   - key: dedicated
@@ -55,6 +48,7 @@ affinity:
     preferredDuringSchedulingIgnoredDuringExecution:
       - weight: 1
         preference:
+          matchExpressions:
           - key: role
             operator: In
             values:
@@ -67,11 +61,7 @@ affinity:
             operator: In
             values:
             - velero
-        topologyKey:
-          - "kubernetes.io/hostname"
-          - "topology.kubernetes.io/zone"
-          - "topology.kubernetes.io/region"
-          - "*"
+        topologyKey: "kubernetes.io/hostname"
 
 extraVolumes:
   - name: tmpdir
@@ -83,7 +73,7 @@ extraVolumeMounts:
 
 # Settings for Velero's prometheus metrics. Enabled by default.
 metrics:
-  enabled: true
+  enabled: ENABLED_PROMETHEUS_MONITORING
   scrapeInterval: 30s
   scrapeTimeout: 10s
 
@@ -97,7 +87,7 @@ metrics:
     prometheus.io/path: "/metrics"
 
   serviceMonitor:
-    enabled: true
+    enabled: ENABLED_PROMETHEUS_MONITORING
     additionalLabels: {}
     # namespace: velero # ServiceMonitor namespace
 
