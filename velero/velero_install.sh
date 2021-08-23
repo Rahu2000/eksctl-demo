@@ -19,6 +19,7 @@
 #!/bin/bash
 set -x
 export CLUSTER_NAME="eksworkshop"
+export RELEASE_NAME=velero
 export IAM_POLICY_NAME="AmazoneEKS_S3_Policy_For_Velero"
 export IAM_ROLE_NAME="AmazoneEKS_S3_Role_For_Velero"
 export AWS_CSI_VERSION="v1.2.0"
@@ -41,6 +42,9 @@ source ../common/utils.sh
 if [ "delete" == "$1" ]; then
   helm delete ${RELEASE_NAME} --namespace ${NAMESPACE}
   kubectl delete ns ${NAMESPACE}
+
+  echo "Snapshots are not deleted. You must manually delete the snapshots."
+  exit 0
 fi
 
 ##############################################################
@@ -55,7 +59,7 @@ fi
 
 DIR=(`date "+%Y-%m-%d-%H%M%S"`)
 mkdir -p /tmp/$DIR
-cp ./templates/*.yaml /tmp/${DIR}/
+cp ./templates/* /tmp/${DIR}/
 
 ##############################################################
 # Create IAM Role and ServiceAccount
@@ -109,10 +113,15 @@ else
   sed -i "s/CLEANUP_CRDS/${CLEANUP_CRDS}/g" /tmp/${DIR}/velero.values.yaml
 fi
 
-helm upgrade --install velero \
+helm upgrade --install ${RELEASE_NAME} \
   vmware-tanzu/velero \
   --version=${CHART_VERSION} \
   --namespace ${NAMESPACE} \
   --create-namespace \
   -f /tmp/${DIR}/velero.values.yaml \
   --wait
+
+##############################################################
+## Create a EBS Volume Snapshot Class
+##############################################################
+kubectl apply -f /tmp/${DIR}/ebs-volume-snapshot-clsss.yaml
