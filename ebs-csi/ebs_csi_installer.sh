@@ -56,12 +56,12 @@ mv /tmp/${DIR}/ebs-csi-driver.v${VERSION}.values.yaml /tmp/${DIR}/ebs-csi-driver
 # Create IAM Role and ServiceAccount
 ##############################################################
 ## download a latest policy for EBS CSI controller from kubernetes-sigs
-curl -sSL -o ebs-csi-policy.json https://raw.githubusercontent.com/kubernetes-sigs/aws-ebs-csi-driver/master/docs/example-iam-policy.json
+curl -sSL -o /tmp/${DIR}/ebs-csi-policy.json https://raw.githubusercontent.com/kubernetes-sigs/aws-ebs-csi-driver/master/docs/example-iam-policy.json
 
 ## create a policy
 IAM_POLICY_ARN=$(aws iam list-policies --scope Local 2> /dev/null | jq -c --arg policyname $IAM_POLICY_NAME '.Policies[] | select(.PolicyName == $policyname)' | jq -r '.Arn')
 if [ -z "$IAM_POLICY_ARN" ]; then
-  IAM_POLICY_ARN=$(aws iam create-policy --policy-name ${IAM_POLICY_NAME} --policy-document file://ebs-csi-policy.json | jq -r .Policy.Arn)
+  IAM_POLICY_ARN=$(aws iam create-policy --policy-name ${IAM_POLICY_NAME} --policy-document file:///tmp/${DIR}/ebs-csi-policy.json | jq -r .Policy.Arn)
 fi
 
 CONTROLLER_IAM_ROLE_ARN=$(createRole "$CLUSTER_NAME" "$NAMESPACE" "$CONTROLLER_SERVICE_ACCOUNT" "$CONTROLLER_IAM_ROLE_NAME" "$IAM_POLICY_ARN")
@@ -101,8 +101,13 @@ if [[ "2" == $VERSION ]] && [[ "true" == $SNAPSHOT_ENABLE ]]; then
 
   kubectl apply -k /tmp/${DIR}/kustomize/
 
-  echo "Delete snapshot controller:"
+  echo ""
+  echo "The Delete command for the snapshot controller is:"
+  echo ""
   echo "kubectl delete -k /tmp/${DIR}/kustomize/"
+  echo ""
+  echo "you need a backup /tmp/${DIR}/kustomize/"
+  echo ""
 fi
 
 ##############################################################
@@ -156,13 +161,6 @@ fi
 
 ## Add gp3 and io2 type StorageClass
 kubectl apply -f /tmp/${DIR}/added-storage-class.yaml
-
-##############################################################
-## Create a EBS Volume Snapshot Class
-##############################################################
-if [[ "1" == $VERSION ]] && [[ "true" == $SNAPSHOT_ENABLE ]]; then
-  kubectl apply -f /tmp/${DIR}/ebs-volume-snapshot-clsss.yaml
-fi
 
 ##############################################################
 ## Create a PodDisruptionBudget

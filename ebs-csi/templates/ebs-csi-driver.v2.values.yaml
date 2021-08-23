@@ -67,7 +67,13 @@ controller:
     operator: Equal
     value: "management"
     effect: NoSchedule
-  topologySpreadConstraints: []
+  topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: topology.kubernetes.io/zone
+    whenUnsatisfiable: ScheduleAnyway
+  - maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: ScheduleAnyway
 
 node:
   env: []
