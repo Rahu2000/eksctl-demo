@@ -19,18 +19,32 @@ export IAM_POLICY_NAME="AmazonEKS_EFS_CSI_Driver_Policy"
 export IAM_ROLE_NAME="AmazonEFS_EFS_CSI_Driver_Role"
 export SERVICE_ACCOUNT="efs-csi-controller"
 export NAMESPACE="kube-system"
-export CHART_VERSION="v1.2.4"
+export CHART_VERSION="2.1.5"
 export REGION="ap-northeast-2"
 export CREATE_CONTROLLER="true" # [true|false]
+export RELEASE_NAME="aws-efs-csi-driver"
 
 source ../common/utils.sh
 
 IAM_ROLE_ARN=""
 IAM_POLICY_ARN=""
 
+VERSION=$(echo $CHART_VERSION | awk -F '.' '{print $1}')
+
 DIR=(`date "+%Y-%m-%d-%H%M%S"`)
 mkdir -p /tmp/$DIR
 cp ./templates/*.yaml /tmp/${DIR}/
+mv /tmp/${DIR}/efs-csi-driver.v${VERSION}.values.yaml /tmp/${DIR}/efs-csi-driver.values.yaml
+##############################################################
+# Delete release
+##############################################################
+if [ "delete" == "$1" ]; then
+  kubectl delete --ignore-not-found pdb/efs-csi-controller-pdb --namespace ${NAMESPACE}
+  helm delete ${RELEASE_NAME} --namespace ${NAMESPACE}
+
+  exit 0
+fi
+
 
 if [[ "true" == $CREATE_CONTROLLER ]]; then
   ##############################################################
@@ -76,8 +90,9 @@ else
   fi
 fi
 
-helm upgrade --install aws-efs-csi-driver \
+helm upgrade --install ${RELEASE_NAME} \
   aws-efs-csi-driver/aws-efs-csi-driver \
+  --set fullnameOverride=${RELEASE_NAME} \
   --version=${CHART_VERSION} \
   --namespace ${NAMESPACE} \
   -f /tmp/${DIR}/efs-csi-driver.values.yaml \

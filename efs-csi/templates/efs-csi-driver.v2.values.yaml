@@ -1,0 +1,63 @@
+replicaCount: 1
+
+controller:
+  create: CREATE_CONTROLLER
+
+  resources: {}
+    # limits:
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+
+  tolerations:
+  - key: dedicated
+    operator: Equal
+    value: "management"
+    effect: NoSchedule
+
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: role
+                operator: In
+                values:
+                  - management
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 1
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/instance: aws-efs-csi-driver-controller
+                app.kubernetes.io/name: aws-efs-csi-driver
+            namespaces:
+              - kube-system
+            topologyKey: "kubernetes.io/hostname"
+
+  logLevel: 5
+  serviceAccount:
+    create: CREATE_CONTROLLER
+    annotations:
+      eks.amazonaws.com/role-arn: IAM_ROLE_ARN
+    name: SERVICE_ACCOUNT
+
+node:
+  # for cross VPC EFS, you need to poison or overwrite the DNS for the efs volume as per
+  # https://docs.aws.amazon.com/efs/latest/ug/efs-different-vpc.html#wt6-efs-utils-step3
+  # implementing the suggested solution found here:
+  # https://github.com/kubernetes-sigs/aws-efs-csi-driver/issues/240#issuecomment-676849346
+  # EFS Vol ID, IP, Region
+  # "fs-01234567":
+  #   ip: 10.10.2.2
+  #   region: us-east-2
+  dnsPolicy: ""
+  dnsConfig: {}
+
+  serviceAccount:
+    create: false
+    annotations:
+      eks.amazonaws.com/role-arn: IAM_ROLE_ARN
+    name: SERVICE_ACCOUNT

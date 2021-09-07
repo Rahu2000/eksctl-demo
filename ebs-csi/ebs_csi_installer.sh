@@ -145,6 +145,7 @@ fi
 
 helm upgrade --install ${RELEASE_NAME} \
   aws-ebs-csi-driver/aws-ebs-csi-driver \
+  --set fullnameOverride=${RELEASE_NAME} \
   --version=${CHART_VERSION} \
   --namespace ${NAMESPACE} \
   -f /tmp/${DIR}/ebs-csi-driver.values.yaml \
