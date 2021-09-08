@@ -65,7 +65,7 @@ if [ "Darwin" == "$LOCAL_OS_KERNEL" ]; then
   sed -i '' "s|SERVICE_ACCOUNT|${SERVICE_ACCOUNT}|g" /tmp/${DIR}/cluster-autoscaler.values.yaml
   sed -i '' "s|ENABBLE_PROMETHEUS_MONITORING|${ENABBLE_PROMETHEUS_MONITORING}|g" /tmp/${DIR}/cluster-autoscaler.values.yaml
 else
-  ROLE_ARN=$(echo ${ROLE_ARN} | sed 's/\//\\//')
+  ROLE_ARN=$(echo ${ROLE_ARN} | sed 's|\/|\\/|')
   sed -i.bak "s/IAM_ROLE_NAME/${ROLE_ARN}/g" /tmp/${DIR}/cluster-autoscaler.values.yaml
   sed -i "s/CLUSTER_NAME/${CLUSTER_NAME}/g" /tmp/${DIR}/cluster-autoscaler.values.yaml
   sed -i "s/RELEASE_NAME/${RELEASE_NAME}/g" /tmp/${DIR}/cluster-autoscaler.values.yaml
