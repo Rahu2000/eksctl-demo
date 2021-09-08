@@ -18,8 +18,21 @@ export CHART_VERSION="v9.7.0"
 export NAMESPACE="kube-system"
 export RELEASE_NAME="aws-cluster-autoscaler"
 export SERVICE_ACCOUNT="aws-cluster-autoscaler"
+export ENABBLE_PROMETHEUS_MONITORING="false"
 
 source ../common/utils.sh
+
+##############################################################
+# Delete release
+##############################################################
+if [ "delete" == "$1" ]; then
+  helm delete ${RELEASE_NAME} --namespace ${NAMESPACE}
+  exit 0
+fi
+
+DIR=(`date "+%Y-%m-%d-%H%M%S"`)
+mkdir -p /tmp/$DIR
+cp ./templates/*.values.yaml /tmp/${DIR}/
 
 ##############################################################
 # Create IAM Role and ServiceAccount
@@ -46,16 +59,18 @@ helm repo update
 ## Modifying variables
 if [ "Darwin" == "$LOCAL_OS_KERNEL" ]; then
   ROLE_ARN=$(echo ${ROLE_ARN} | sed 's|\/|\\/|')
-  sed -i.bak "s|IAM_ROLE_NAME|${ROLE_ARN}|g" ./templates/cluster-autoscaler.values.yaml
-  sed -i '' "s|CLUSTER_NAME|${CLUSTER_NAME}|g" ./templates/cluster-autoscaler.values.yaml
-  sed -i '' "s|RELEASE_NAME|${RELEASE_NAME}|g" ./templates/cluster-autoscaler.values.yaml
-  sed -i '' "s|SERVICE_ACCOUNT|${SERVICE_ACCOUNT}|g" ./templates/cluster-autoscaler.values.yaml
+  sed -i.bak "s|IAM_ROLE_NAME|${ROLE_ARN}|g" /tmp/${DIR}/cluster-autoscaler.values.yaml
+  sed -i '' "s|CLUSTER_NAME|${CLUSTER_NAME}|g" /tmp/${DIR}/cluster-autoscaler.values.yaml
+  sed -i '' "s|RELEASE_NAME|${RELEASE_NAME}|g" /tmp/${DIR}/cluster-autoscaler.values.yaml
+  sed -i '' "s|SERVICE_ACCOUNT|${SERVICE_ACCOUNT}|g" /tmp/${DIR}/cluster-autoscaler.values.yaml
+  sed -i '' "s|ENABBLE_PROMETHEUS_MONITORING|${ENABBLE_PROMETHEUS_MONITORING}|g" /tmp/${DIR}/cluster-autoscaler.values.yaml
 else
   ROLE_ARN=$(echo ${ROLE_ARN} | sed 's/\//\\//')
-  sed -i.bak "s/IAM_ROLE_NAME/${ROLE_ARN}/g" ./templates/cluster-autoscaler.values.yaml
-  sed -i "s/CLUSTER_NAME/${CLUSTER_NAME}/g" ./templates/cluster-autoscaler.values.yaml
-  sed -i "s/RELEASE_NAME/${RELEASE_NAME}/g" ./templates/cluster-autoscaler.values.yaml
-  sed -i "s/SERVICE_ACCOUNT/${SERVICE_ACCOUNT}/g" ./templates/cluster-autoscaler.values.yaml
+  sed -i.bak "s/IAM_ROLE_NAME/${ROLE_ARN}/g" /tmp/${DIR}/cluster-autoscaler.values.yaml
+  sed -i "s/CLUSTER_NAME/${CLUSTER_NAME}/g" /tmp/${DIR}/cluster-autoscaler.values.yaml
+  sed -i "s/RELEASE_NAME/${RELEASE_NAME}/g" /tmp/${DIR}/cluster-autoscaler.values.yaml
+  sed -i "s/SERVICE_ACCOUNT/${SERVICE_ACCOUNT}/g" /tmp/${DIR}/cluster-autoscaler.values.yaml
+  sed -i "s/ENABBLE_PROMETHEUS_MONITORING/${ENABBLE_PROMETHEUS_MONITORING}/g" /tmp/${DIR}/cluster-autoscaler.values.yaml
 fi
 
 ## Install the cluster-autoscaler helm chart
@@ -63,5 +78,5 @@ helm upgrade --install \
   ${RELEASE_NAME} autoscaler/cluster-autoscaler \
   --version=${CHART_VERSION} \
   --namespace "$NAMESPACE" \
-  -f ./templates/cluster-autoscaler.values.yaml \
+  -f /tmp/${DIR}/cluster-autoscaler.values.yaml \
   --wait

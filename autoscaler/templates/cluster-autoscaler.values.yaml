@@ -16,11 +16,7 @@ affinity:
               operator: In
               values:
                 - cluster-autoscaler
-        topologyKey:
-          - "kubernetes.io/hostname"
-          - "topology.kubernetes.io/zone"
-          - "topology.kubernetes.io/region"
-          - "*"
+        topologyKey: "kubernetes.io/hostname"
 
 autoDiscovery:
   clusterName:  CLUSTER_NAME
@@ -91,8 +87,8 @@ podAnnotations:
   cluster-autoscaler.kubernetes.io/safe-to-evict: "false"
   kubernetes.io/psp: RELEASE_NAME
 
-podDisruptionBudget:
-  minAvailable: 1
+# podDisruptionBudget:
+#   minAvailable: 1
 
 priorityClassName: "system-cluster-critical"
 
@@ -132,7 +128,7 @@ securityContext:
 #   type: ClusterIP
 
 serviceMonitor:
-  enabled: true
+  enabled: ENABBLE_PROMETHEUS_MONITORING
   interval: 10s
   namespace: monitoring
   selector:
@@ -140,7 +136,7 @@ serviceMonitor:
   path: /metrics
 
 prometheusRule:
-  enabled: true
+  enabled: ENABBLE_PROMETHEUS_MONITORING
   additionalLabels: {}
   # prometheusRule.namespace -- Namespace which Prometheus is running in.
   namespace: monitoring
