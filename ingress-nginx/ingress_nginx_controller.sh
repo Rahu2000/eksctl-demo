@@ -15,7 +15,8 @@ export NAMESPACE="ingress-nginx"
 export SERVICE_ACCOUNT="ingress-nginx-controller"
 export CHART_VERSION="3.34.0"
 export REGION="ap-northeast-2"
-export INTERNAL=true
+export INTERNAL=false
+export RELEASE_NAME="ingress-nginx"
 
 ##############################################################
 # Delete release
@@ -46,7 +47,7 @@ else
   cp ./templates/ingress-nginx.values.yaml /tmp/${DIR}/values.yaml
 fi
 
-helm upgrade --install ingress-nginx-internal \
+helm upgrade --install ${RELEASE_NAME} \
   ingress-nginx/ingress-nginx \
   --version=${CHART_VERSION} \
   --namespace ${NAMESPACE} \
