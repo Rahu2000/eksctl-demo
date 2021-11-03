@@ -6,8 +6,6 @@ aws:
   zoneType: "ZONETYPE"
   apiRetries: 3
   batchChangeSize: 1000
-  ## AWS Zone tags
-  ##
   zoneTags: []
   evaluateTargetHealth: "true"
 
@@ -20,7 +18,7 @@ sources:
 domainFilters: [DOMAINS]
 excludeDomains: []
 triggerLoopOnEvent: false
-policy: upsert-only
+policy: DNS_POLICY
 registry: "txt"
 # txtPrefix: ""
 # txtSuffix: ""
@@ -42,8 +40,6 @@ tolerations:
     value: "management"
     effect: NoSchedule
 
-## Additional labels for the pod(s).
-##
 podLabels: {}
 
 priorityClassName: "system-cluster-critical"
@@ -57,9 +53,6 @@ service:
   enabled: true
   type: ClusterIP
   port: 7979
-  # nodePort:
-  # clusterIP: ""
-  # externalIPs: []
   # loadBalancerIP:
   ## Address that are allowed when svc is LoadBalancer
   loadBalancerSourceRanges: []

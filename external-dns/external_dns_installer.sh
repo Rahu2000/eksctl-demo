@@ -7,8 +7,10 @@
 # - kubectl 1.16+
 #
 # Tested version
-#   EKS v1.19
+# - EKS v1.19
 #   chart: bitnami/external-dns/5.0.3 (0.8.0)
+# - EKS v1.21
+#   chart: bitnami/external-dns/5.4.15 (0.10.1)
 ##############################################################
 #!/bin/bash
 export CLUSTER_NAME="eksworkshop"
@@ -16,10 +18,11 @@ export IAM_POLICY_NAME="AmazonEKS_External_DNS_Route53_Policy"
 export IAM_ROLE_NAME="AmazonEKS_External_DNS_Route53_Role"
 export NAMESPACE="external-dns"
 export SERVICE_ACCOUNT="external-dns"
-export CHART_VERSION="5.0.3"
+export CHART_VERSION="5.4.15"
 export REGION="ap-northeast-2"
 export ZONETYPE="public"
 export DOMAINS="eksdemo.tk"
+export DNS_POLICY=sync # sync | upsert-only
 export RELEASE_NAME="external-dns-${ZONETYPE}"
 
 source ../common/utils.sh
@@ -34,6 +37,9 @@ if [ "delete" == "$1" ]; then
   exit 0
 fi
 
+DIR=(`date "+%Y-%m-%d-%H%M%S"`)
+mkdir -p /tmp/$DIR
+cp ./templates/*.yaml /tmp/${DIR}/
 ##############################################################
 # Check Route53
 ##############################################################
@@ -68,26 +74,28 @@ fi
 helm repo update
 
 if [ "Darwin" == "$LOCAL_OS_KERNEL" ]; then
-  sed -i.bak "s|IAM_ROLE_ARN|${IAM_ROLE_ARN}|g" ./templates/external-dns-values.yaml
-  sed -i '' "s|SERVICE_ACCOUNT|${SERVICE_ACCOUNT}|g" ./templates/external-dns-values.yaml
-  sed -i '' "s|REGION|${REGION}|g" ./templates/external-dns-values.yaml
-  sed -i '' "s|ZONETYPE|${ZONETYPE}|g" ./templates/external-dns-values.yaml
-  sed -i '' "s|DOMAINS|${DOMAINS}|g" ./templates/external-dns-values.yaml
-  sed -i '' "s|HOSTZONEID|${HOSTZONEID}|g" ./templates/external-dns-values.yaml
+  sed -i.bak "s|IAM_ROLE_ARN|${IAM_ROLE_ARN}|g" /tmp/${DIR}/external-dns-values.yaml
+  sed -i '' "s|SERVICE_ACCOUNT|${SERVICE_ACCOUNT}|g" /tmp/${DIR}/external-dns-values.yaml
+  sed -i '' "s|REGION|${REGION}|g" /tmp/${DIR}/external-dns-values.yaml
+  sed -i '' "s|ZONETYPE|${ZONETYPE}|g" /tmp/${DIR}/external-dns-values.yaml
+  sed -i '' "s|DNS_POLICY|${DNS_POLICY}|g" /tmp/${DIR}/external-dns-values.yaml
+  sed -i '' "s|DOMAINS|${DOMAINS}|g" /tmp/${DIR}/external-dns-values.yaml
+  sed -i '' "s|HOSTZONEID|${HOSTZONEID}|g" /tmp/${DIR}/external-dns-values.yaml
 else
   IAM_ROLE_ARN=$(echo ${IAM_ROLE_ARN} | sed 's|\/|\\/|')
-  sed -i.bak "s/IAM_ROLE_ARN/${IAM_ROLE_ARN}/g" ./templates/external-dns-values.yaml
-  sed -i "s/SERVICE_ACCOUNT/${SERVICE_ACCOUNT}/g" ./templates/external-dns-values.yaml
-  sed -i "s/REGION/${REGION}/g" ./templates/external-dns-values.yaml
-  sed -i "s/ZONETYPE/${ZONETYPE}/g" ./templates/external-dns-values.yaml
-  sed -i "s/DOMAINS/${DOMAINS}/g" ./templates/external-dns-values.yaml
-  sed -i "s/HOSTZONEID/${HOSTZONEID}/g" ./templates/external-dns-values.yaml
+  sed -i.bak "s/IAM_ROLE_ARN/${IAM_ROLE_ARN}/g" /tmp/${DIR}/external-dns-values.yaml
+  sed -i "s/SERVICE_ACCOUNT/${SERVICE_ACCOUNT}/g" /tmp/${DIR}/external-dns-values.yaml
+  sed -i "s/REGION/${REGION}/g" /tmp/${DIR}/external-dns-values.yaml
+  sed -i "s/ZONETYPE/${ZONETYPE}/g" /tmp/${DIR}/external-dns-values.yaml
+  sed -i "s/DNS_POLICY/${DNS_POLICY}/g" /tmp/${DIR}/external-dns-values.yaml
+  sed -i "s/DOMAINS/${DOMAINS}/g" /tmp/${DIR}/external-dns-values.yaml
+  sed -i "s/HOSTZONEID/${HOSTZONEID}/g" /tmp/${DIR}/external-dns-values.yaml
 fi
 
 helm upgrade --install ${RELEASE_NAME} \
   bitnami/external-dns \
   --version=${CHART_VERSION} \
   --namespace ${NAMESPACE} \
-  -f ./templates/external-dns-values.yaml \
+  -f /tmp/${DIR}/external-dns-values.yaml \
   --create-namespace \
   --wait
