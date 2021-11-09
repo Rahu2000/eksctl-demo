@@ -1,0 +1,46 @@
+global:
+  edition: GITLAB_EDITION
+  hosts:
+    domain: DOMAIN
+  ingress:
+    configureCertmanager: false
+    # Enable TLS termination on Ingress objects, by NGINX to use self-signed certificates
+    tls:
+      enabled: false
+    annotations:
+      alb.ingress.kubernetes.io/scheme: LOAD_BALANCE_INTERNAL
+      alb.ingress.kubernetes.io/target-type: 'ip'
+      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+      alb.ingress.kubernetes.io/certificate-arn: ACM_ARN
+      alb.ingress.kubernetes.io/backend-protocol: HTTP
+      alb.ingress.kubernetes.io/actions.redirect-to-https: '{"Type":"redirect","RedirectConfig":{"Port":"443","Protocol":"HTTPS","StatusCode":"HTTP_302"}}'
+      alb.ingress.kubernetes.io/load-balancer-name: 'gitlab-alb'
+      alb.ingress.kubernetes.io/group.name: 'gitlab'
+    class: alb
+
+nginx-ingress:
+  enabled: false
+gitlab-runner:
+  install: GITLAB_RUNNER_INSTALL
+  runners:
+    privileged: true
+certmanager:
+  install: false
+gitlab:
+  webservice:
+    service:
+      type: NodePort
+  ingress:
+    annotations:
+      alb.ingress.kubernetes.io/group.order: '1'
+minio:
+  serviceType: NodePort
+  ingress:
+    annotations:
+      alb.ingress.kubernetes.io/group.order: '2'
+registry:
+  service:
+    type: NodePort
+  ingress:
+    annotations:
+      alb.ingress.kubernetes.io/group.order: '3'

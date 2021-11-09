@@ -1,0 +1,52 @@
+global:
+  edition: GITLAB_EDITION
+  hosts:
+    domain: DOMAIN
+  ingress:
+    configureCertmanager: true
+    tls:
+      enabled: true
+    annotations:
+      kubernetes.io/tls-acme: true
+  nodeSelector: {}
+    # role: gitlab
+  common:
+    labels: {}
+      # environment: production
+  tolerations: []
+  appConfig:
+    omniauth:
+      enabled: OMNIAUTH_ENABLED
+      allowSingleSignOn: ['google_oauth2']
+      externalProviders: ['google_oauth2']
+      providers:
+      - secret: OMNIAUTH_PROVIDERS_SECRET
+
+nginx-ingress:
+  controller:
+    config:
+      use-forwarded-headers: "true"
+    service:
+      annotations:
+        service.beta.kubernetes.io/aws-load-balancer-backend-protocol: https
+        service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout: "3600"
+        service.beta.kubernetes.io/aws-load-balancer-internal: LOAD_BALANCE_INTERNAL
+        service.beta.kubernetes.io/aws-load-balancer-ssl-ports: https
+        service.beta.kubernetes.io/aws-load-balancer-ssl-cert: ACM_ARN
+        service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: 'true'
+        domainName: DOMAIN
+      labels:
+        dns: "route53"
+
+gitlab-runner:
+  install: GITLAB_RUNNER_INSTALL
+  runners:
+    privileged: true
+  nodeSelector: {}
+    # role: gitlab-runner
+  tolerations: []
+
+certmanager:
+  install: false
+certmanager-issuer:
+  email: ISSUER_EMAIL
