@@ -1,5 +1,13 @@
 global:
   edition: GITLAB_EDITION
+  gitlab:
+    license: {}
+      # secret: RELEASE-gitlab-license
+      # key: license
+  initialRootPassword: {}
+    # secret: RELEASE-gitlab-initial-root-password
+    # key: password
+
   hosts:
     domain: DOMAIN
   ingress:
