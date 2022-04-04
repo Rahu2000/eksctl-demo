@@ -9,10 +9,19 @@
                 "autoscaling:DescribeTags",
                 "autoscaling:SetDesiredCapacity",
                 "autoscaling:TerminateInstanceInAutoScalingGroup",
+                "ec2:DescribeInstanceTypes",
                 "ec2:DescribeLaunchTemplateVersions"
             ],
             "Resource": "*",
             "Effect": "Allow"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "autoscaling:SetDesiredCapacity",
+                "autoscaling:TerminateInstanceInAutoScalingGroup"
+            ],
+            "Resource": ["*"]
         }
     ]
 }
